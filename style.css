@@ -1,0 +1,519 @@
+@charset "UTF-8";
+
+:root {
+    font-family: "Yu Gothic UI", "Hiragino Kaku Gothic ProN", Meiryo, sans-serif;
+    color: #223a35;
+    background: #f6f3eb;
+    font-synthesis: none;
+    color-scheme: light
+}
+
+* {
+    box-sizing: border-box
+}
+
+body {
+    margin: 0
+}
+
+/* 実測した内容の高さに合わせて縮小し、全操作を画面内に収めます。 */
+body.viewport-fit {
+    height: 100dvh;
+    overflow: hidden;
+}
+
+.viewport-fit .app {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    width: 100%;
+    transform: scale(var(--app-scale, 1));
+    transform-origin: top center;
+}
+
+button {
+    font: inherit;
+    cursor: pointer;
+    touch-action: manipulation
+}
+
+button:disabled {
+    cursor: wait;
+    opacity: .6
+}
+
+button:focus-visible {
+    outline: 3px solid #cd8433;
+    outline-offset: 4px
+}
+
+[hidden] {
+    display: none !important
+}
+
+.app {
+    max-width: 480px;
+    margin: auto;
+    padding: 24px 24px 16px
+}
+
+.header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 14px;
+    font-weight: 700;
+    margin-bottom: 36px
+}
+
+.brand-mark {
+    display: grid;
+    place-items: center;
+    background: #244b40;
+    color: white;
+    border-radius: 11px;
+    width: 32px;
+    height: 32px;
+    font-size: 22px
+}
+
+.badge {
+    margin-left: auto;
+    border: 1px solid #d7dbcf;
+    border-radius: 20px;
+    padding: 4px 10px;
+    font-size: 11px;
+    color: #69796d
+}
+
+.eyebrow {
+    letter-spacing: .15em;
+    color: #69796d;
+    font-size: 10px;
+    font-weight: 700;
+    margin: 0 0 18px
+}
+
+h1 {
+    font-size: clamp(27px, 7vw, 34px);
+    line-height: 1.6;
+    letter-spacing: .02em;
+    margin: 0 0 16px
+}
+
+.intro {
+    font-size: 13px;
+    line-height: 1.9;
+    color: #647267;
+    margin: 0 0 24px
+}
+
+.preview-card {
+    background: #fffdf7;
+    border: 1px solid #dedbcf;
+    border-radius: 18px;
+    padding: 22px;
+    text-align: center;
+    transform: rotate(-3deg);
+    box-shadow: 5px 8px 0 #e9e5d9;
+    margin: 28px 18px 34px
+}
+
+.preview-card>span {
+    display: block;
+    font-size: 32px;
+    margin-bottom: 12px
+}
+
+.preview-card strong {
+    font-size: 18px
+}
+
+.preview-card p {
+    font-size: 13px;
+    color: #6a796d;
+    margin-bottom: 0
+}
+
+.start-money {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin: 24px 0 18px;
+    font-size: 13px
+}
+
+.start-money strong {
+    font-size: 21px
+}
+
+.primary {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+    border: 0;
+    border-radius: 12px;
+    background: #244b40;
+    color: #fff;
+    padding: 18px 22px;
+    min-height: 58px;
+    font-size: 16px;
+    font-weight: 700;
+    box-shadow: 0 3px 0 #193a30
+}
+
+.primary:hover {
+    background: #315c4f
+}
+
+.primary span {
+    font-size: 22px
+}
+
+.text-button {
+    border: 0;
+    background: transparent;
+    color: #617569;
+    padding: 14px 8px;
+    font-size: 12px;
+    min-height: 44px
+}
+
+#new-game {
+    display: block;
+    margin: 10px auto
+}
+
+.instructions {
+    padding-left: 23px;
+    font-size: 12px;
+    line-height: 2.1;
+    color: #68766b;
+    margin: 26px 0
+}
+
+.instructions li::marker {
+    color: #345b4b;
+    font-weight: 700
+}
+
+.wallet {
+    background: #e6ecdf;
+    border: 1px solid #d6dfcf;
+    border-radius: 16px;
+    padding: 23px;
+    text-align: center
+}
+
+.wallet>span {
+    display: block;
+    font-size: 12px;
+    color: #536a58
+}
+
+.wallet strong {
+    display: block;
+    font-size: clamp(29px, 8vw, 40px);
+    letter-spacing: .02em;
+    margin: 8px 0;
+    font-variant-numeric: tabular-nums
+}
+
+.wallet .wallet-note {
+    font-size: 10px
+}
+
+.era-controls {
+    display: flex;
+    gap: 6px;
+    margin-top: 12px;
+}
+
+.progress-info {
+    display: flex;
+    justify-content: space-between;
+    margin: 12px 0 6px;
+    font-size: 12px;
+    font-weight: 700;
+    color: #536a58;
+}
+
+#board-progress {
+    display: block;
+    width: 100%;
+    height: 6px;
+    border: 0;
+    border-radius: 6px;
+    accent-color: #244b40;
+    background: #d6dfcf;
+}
+
+#board-progress::-webkit-progress-bar { background: #d6dfcf; border-radius: 6px; }
+#board-progress::-webkit-progress-value { background: #244b40; border-radius: 6px; }
+#board-progress::-moz-progress-bar { background: #244b40; border-radius: 6px; }
+
+.era-controls button {
+    flex: 1;
+    min-height: 44px;
+    padding: 8px;
+    border: 1px solid #d6dfcf;
+    border-radius: 10px;
+    background: #fffdf8;
+    color: #536a58;
+    font-size: 13px;
+}
+
+.era-controls button[aria-pressed="true"] {
+    background: #244b40;
+    border-color: #244b40;
+    color: white;
+    font-weight: 700;
+}
+
+.event-card {
+    margin-top: 18px;
+    background: #fffdf8;
+    border: 1px solid #dedbcf;
+    border-radius: 20px;
+    padding: 18px 16px;
+    text-align: center;
+    box-shadow: 0 5px 0 #e7e3d8;
+    height: 310px;
+    display: grid;
+    grid-template-rows: 54px minmax(0, 1fr) 40px 42px;
+    gap: 6px
+}
+
+.event-card .eyebrow {
+    margin: 0;
+    line-height: 16px
+}
+
+#draw { margin-top: 18px; }
+
+.card-icon {
+    display: grid;
+    place-items: center;
+    font-size: 45px;
+    line-height: 1;
+    height: 54px
+}
+
+.event-card h2 {
+    font-size: 22px;
+    line-height: 1.6;
+    margin: 0;
+    align-content: center;
+    overflow-wrap: anywhere;
+    min-height: 0;
+    overflow: visible
+}
+
+.card-money {
+    font-size: 24px;
+    font-weight: 700;
+    margin: 0;
+    line-height: 40px;
+    color: #345d46
+}
+
+.card-money.expense {
+    color: #a05e37
+}
+
+.card-money.neutral {
+    font-size: 15px;
+    color: #68766b
+}
+
+.move {
+    border-top: 1px dashed #d8dbcf;
+    padding-top: 10px;
+    line-height: 28px;
+    font-size: 18px;
+    font-weight: 700
+}
+
+.hint {
+    text-align: center;
+    font-size: 11px;
+    color: #6b776b;
+    line-height: 1.8;
+    margin: 16px 0 14px
+}
+
+.secondary-actions {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 9px
+}
+
+footer {
+    text-align: center;
+    font-size: 10px;
+    line-height: 1.9;
+    color: #788174;
+    margin-top: 32px
+}
+
+footer span {
+    color: #8c8e80
+}
+
+.result {
+    text-align: center
+}
+
+.result-icon {
+    display: block;
+    font-size: 64px;
+    color: #315c4f;
+    margin: 26px 0
+}
+
+.result .wallet {
+    margin: 30px 0
+}
+
+.notice {
+    padding: 13px;
+    border: 1px solid #ddcba4;
+    background: #fff3d8;
+    border-radius: 10px;
+    font-size: 12px;
+    line-height: 1.8;
+    margin-bottom: 22px
+}
+
+.sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0
+}
+
+dialog {
+    width: calc(100% - 40px);
+    max-width: 400px;
+    border: 1px solid #dedbcf;
+    border-radius: 18px;
+    padding: 25px;
+    color: #223a35;
+    background: #fffdf8
+}
+
+dialog::backdrop {
+    background: #142b25a6
+}
+
+dialog h2 {
+    font-size: 20px;
+    margin: 0 0 12px
+}
+
+dialog p {
+    font-size: 13px;
+    line-height: 1.8;
+    color: #657064
+}
+
+.dialog-actions {
+    display: flex;
+    gap: 12px;
+    margin-top: 24px
+}
+
+.dialog-actions button {
+    flex: 1;
+    font-size: 13px
+}
+
+.cancel {
+    border: 1px solid #d6dbce;
+    border-radius: 12px;
+    background: #f4f2e9;
+    padding: 14px;
+    color: #445c4e
+}
+
+.reveal {
+    animation: reveal .3s ease-out
+}
+
+@keyframes reveal {
+    from {
+        opacity: .45;
+        transform: translateY(7px)
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0)
+    }
+}
+
+@media(prefers-reduced-motion:reduce) {
+    .reveal {
+        animation: none
+    }
+}
+
+@media(max-width:350px) {
+    .app {
+        padding: 18px 16px
+    }
+
+    .header {
+        margin-bottom: 25px
+    }
+
+    .event-card h2 {
+        font-size: 19px
+    }
+}
+
+/* ブラウザの操作バーを除いた高さに合わせ、操作ボタンまで収めます。 */
+@media (max-height: 800px) {
+    .app { padding: 12px 20px; }
+    .header { margin-bottom: 16px; }
+    #play .wallet { padding: 12px; }
+    #play .wallet strong { font-size: 32px; line-height: 1.2; margin: 4px 0; }
+    .event-card {
+        margin-top: 12px;
+        height: clamp(230px, calc(100svh - 376px), 310px);
+        padding: 12px 14px;
+        grid-template-rows: 40px minmax(0, 1fr) 36px 36px;
+        gap: 4px;
+    }
+    .card-icon { height: 40px; font-size: 36px; }
+    .event-card h2 { font-size: 20px; line-height: 1.35; }
+    .card-money { line-height: 36px; }
+    .move { padding-top: 6px; }
+    .hint { margin: 10px 0; line-height: 1.4; }
+    .primary { min-height: 50px; padding: 12px 20px; }
+    .secondary-actions { margin-top: 4px; }
+    h1 { font-size: 27px; line-height: 1.4; margin-bottom: 12px; }
+    .intro { margin-bottom: 14px; }
+    .preview-card { padding: 12px; margin: 16px 18px 22px; }
+    .preview-card > span { font-size: 26px; margin-bottom: 6px; }
+    .preview-card p { margin-top: 8px; }
+    .start-money { margin: 16px 0 12px; }
+    .instructions { margin: 16px 0 0; line-height: 1.8; }
+    #new-game { margin: 4px auto; }
+    .result-icon { font-size: 48px; margin: 16px 0; }
+    .result .wallet { margin: 18px 0; }
+}
+
+@media (max-height: 650px) {
+    .preview-card { display: none; }
+    .event-card h2 { font-size: 18px; }
+    .eyebrow { margin-bottom: 12px; }
+    .result-icon { margin: 10px 0; }
+}
