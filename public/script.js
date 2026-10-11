@@ -106,11 +106,17 @@ function initializeViewportFit() {
 
 function initializeGame() {
   const $ = id => document.getElementById(id);
+  let { config: gameConfig, cards } = audienceGame("child");
   let state = null;
   let hasRecord = false;
   let storageAvailable = true;
   let busy = false;
   let pendingAction = null;
+  function selectAudience(value) {
+    $("audience").value = value;
+    for (const id of ["child", "adult"]) $(`audience-${id}`).setAttribute("aria-pressed", String(id === value));
+  }
+  for (const id of ["child", "adult"]) $(`audience-${id}`).addEventListener("click", () => selectAudience(id));
   function notice(message) { $("notice").textContent = message; $("notice").hidden = false; }
   function storageFailure() {
     storageAvailable = false;
@@ -119,9 +125,25 @@ function initializeGame() {
   function save() {
     hasRecord = true;
     if (!storageAvailable) return;
-    try { localStorage.setItem(LifeGame.key, JSON.stringify(state)); } catch { storageFailure(); }
+    try { localStorage.setItem(LifeGame.key, JSON.stringify({ ...state, audience: gameConfig.eras[0].id })); } catch { storageFailure(); }
   }
-  function screen(name) { for (const id of ["welcome", "play", "result"]) $(id).hidden = id !== name; }
+  function screen(name) {
+    for (const id of ["welcome", "play", "result"]) $(id).hidden = id !== name;
+    $("room-entry").hidden = true;
+    $("room-result").hidden = true;
+  }
+  function showWelcome() {
+    screen("welcome");
+    $("room-play").hidden = true;
+    const canResume = state?.status === "playing";
+    $("start").hidden = false;
+    $("resume").hidden = !canResume;
+    $("new-game").hidden = true;
+    $("welcome-label").textContent = canResume ? "保存済みの所持金" : "はじめの所持金";
+    $("welcome-money").textContent = LifeGame.amount(canResume ? state.money : gameConfig.initialMoney);
+    $("announcement").textContent = "最初の画面に戻りました。遊び方を選んでください。";
+    $("start").focus();
+  }
   function showPlay() {
     screen("play");
     $("money").textContent = LifeGame.amount(state.money);
@@ -144,6 +166,7 @@ function initializeGame() {
     $("result-count").textContent = `${state.drawCount}枚のカードで、人生を歩みました。`;
   }
   function start() {
+    ({ config: gameConfig, cards } = audienceGame($("audience").value || "child"));
     state = LifeGame.create(gameConfig, cards);
     save();
     showPlay();
@@ -167,7 +190,9 @@ function initializeGame() {
     pendingAction = null;
     if ($("confirm-dialog").returnValue === "ok" && action) action();
   });
-  for (const id of ["start", "new-game", "restart", "again"]) $(id).addEventListener("click", requestStart);
+  for (const id of ["start", "new-game", "restart"]) $(id).addEventListener("click", requestStart);
+  $("home").addEventListener("click", showWelcome);
+  $("again").addEventListener("click", showWelcome);
   $("resume").addEventListener("click", () => { showPlay(); $("draw").focus(); });
   $("finish").addEventListener("click", () => confirmAction("途中で終了しますか？", "50マスに到着すると自動でゴールします。今終了すると、これ以上カードを引けなくなります。", "終了する", () => {
     state = { ...state, status: "finished" };
@@ -199,11 +224,13 @@ function initializeGame() {
     if (raw !== null) {
       try {
         const saved = JSON.parse(raw);
+        if (saved.audience) ({ config: gameConfig, cards } = audienceGame(saved.audience));
         if (!LifeGame.validState(saved, gameConfig, cards)) throw new Error("invalid state");
         state = saved;
       } catch { notice("保存済みの記録を再開できません。設定が変更されたか、記録が壊れています。新しくゲームを始めてください。"); }
     }
   } catch { storageFailure(); }
+  selectAudience(state ? gameConfig.eras[0].id : "child");
   if (state?.status === "finished") showResult();
   else if (state) {
     $("welcome-label").textContent = "保存済みの所持金";

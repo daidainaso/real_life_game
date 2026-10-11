@@ -1,2 +1,13 @@
 # 個人的な会話ログは公開しません。
 /chat_gpt.md
+
+# Node.js
+/node_modules/
+
+# Cloudflare Wrangler
+/.wrangler/
+.dev.vars
+.dev.vars.*
+
+# 旧実装のローカル保管（コミット対象外）
+/.local-archive/

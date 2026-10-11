@@ -16,19 +16,43 @@ body {
     margin: 0
 }
 
+.field { display: grid; gap: 7px; margin: 14px 0; font-size: 13px; }
+.audience-picker { border: 0; padding: 0; margin: 18px 0; min-width: 0; }
+.audience-picker legend { padding: 0; margin-bottom: 10px; font-size: 15px; font-weight: 700; }
+.audience-options { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+.audience-option { display: grid; gap: 6px; min-height: 116px; padding: 14px 8px; border: 2px solid #d6dfcf; border-radius: 14px; background: #fffdf8; color: #223a35; text-align: center; }
+.audience-option strong { font-size: 20px; }
+.audience-option span { font-size: 12px; line-height: 1.5; }
+.audience-option::after { content: '選ぶ'; font-size: 13px; font-weight: 700; }
+.audience-option[aria-pressed="true"] { border-color: #244b40; background: #244b40; color: #fffdf8; }
+.audience-option[aria-pressed="true"]::after { content: '✓ 選択中'; }
+.field input, .field select { width: 100%; min-height: 44px; padding: 10px; font: inherit; border: 1px solid #d6dfcf; border-radius: 10px; background: #fffdf8; color: #223a35; }
+.room-panel { margin-top: 24px; padding-top: 16px; border-top: 1px solid #dedbcf; }
+.room-panel h2 { font-size: 20px; }
+.room-scores { padding-left: 20px; font-size: 15px; line-height: 1.9; overflow-wrap: anywhere; }
+#room-status { font-size: 25px; font-weight: 700; line-height: 1.4; overflow-wrap: anywhere; }
+#room-status.my-turn { color: #26734d; }
+.room-scores .current-player { font-weight: 700; color: #26734d; }
+#group-mode { margin-top: 10px; }
+.brand-home { padding: 8px 0; border: 0; background: transparent; color: inherit; font: inherit; font-weight: inherit; text-align: left; }
+body.room-open.viewport-fit { overflow: auto; }
+body.room-open .app { transform: none; }
+#room-play .event-card { height: auto; min-height: 240px; }
+#room-play .event-card h2 { font-size: 18px; }
+
 /* 実測した内容の高さに合わせて縮小し、全操作を画面内に収めます。 */
 body.viewport-fit {
-    height: 100dvh;
-    overflow: hidden;
+    min-height: 100dvh;
+    overflow: auto;
 }
 
 .viewport-fit .app {
-    position: fixed;
+    position: static;
     top: 0;
     left: 0;
     right: 0;
     width: 100%;
-    transform: scale(var(--app-scale, 1));
+    transform: none;
     transform-origin: top center;
 }
 

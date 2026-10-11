@@ -1,0 +1,13 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "real-life-game",
+  "main": "worker.mjs",
+  "compatibility_date": "2026-10-11",
+  "assets": {
+    "directory": "./public",
+    "binding": "ASSETS",
+    "run_worker_first": ["/api/*"]
+  },
+  "durable_objects": { "bindings": [{ "name": "ROOMS", "class_name": "GameRoom" }] },
+  "migrations": [{ "tag": "v1", "new_sqlite_classes": ["GameRoom"] }]
+}

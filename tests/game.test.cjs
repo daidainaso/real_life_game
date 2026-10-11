@@ -3,8 +3,8 @@ const assert = require("node:assert/strict");
 const fs = require("node:fs");
 const path = require("node:path");
 const vm = require("node:vm");
-const game = require("../script.js");
-const root = path.join(__dirname, "..");
+const game = require("../public/script.js");
+const root = path.join(__dirname, "..", "public");
 const config = { version: 1, initialMoney: 100000, goal: 50, eras: [{ id: "student", label: "学生", startAt: 0 }] };
 const list = [
   { id: "a", era: "student", title: "収入", money: 10000, move: 2 },
@@ -162,9 +162,32 @@ test("開始・連打防止・再開・確認キャンセル・終了を画面�
   assert.equal(reload.record(), finished);
   assert.equal(loadApp(finished).el("result").hidden, false);
   reload.el("again").click();
+  assert.equal(reload.el("welcome").hidden, false);
+  assert.equal(reload.el("result").hidden, true);
+  assert.equal(reload.el("start").hidden, false);
+  assert.equal(reload.el("resume").hidden, true);
+  assert.equal(reload.record(), finished);
+  reload.el("start").click();
   reload.el("confirm-dialog").close("ok");
   assert.equal(JSON.parse(reload.record()).drawCount, 0);
   assert.equal(JSON.parse(reload.record()).money, 100000);
+});
+
+test("タイトルからモード選択に戻り、1人用の記録を維持して再開できる", () => {
+  const app = loadApp();
+  app.el("start").click();
+  app.el("draw").click();
+  const saved = app.record();
+  app.el("home").click();
+  assert.equal(app.el("welcome").hidden, false);
+  assert.equal(app.el("play").hidden, true);
+  assert.equal(app.el("room-play").hidden, true);
+  assert.equal(app.el("start").hidden, false);
+  assert.equal(app.el("resume").hidden, false);
+  assert.equal(app.record(), saved);
+  app.el("resume").click();
+  assert.equal(app.el("play").hidden, false);
+  assert.equal(app.record(), saved);
 });
 
 test("壊れた記録を勝手に上書きせず、保存できない環境でも遊べる", () => {
@@ -179,5 +202,23 @@ test("壊れた記録を勝手に上書きせず、保存できない環境で�
   assert.match(blocked.el("notice").textContent, /保存できない/);
   assert.equal(blocked.el("play").hidden, false);
   assert.notEqual(blocked.el("card-title").textContent, "どんな人生が待っていますか？");
+});
+
+test("大人向けで開始し、再読み込み後も対象と山札を維持する", () => {
+  const app = loadApp();
+  app.el("audience-adult").click();
+  assert.equal(app.el("audience").value, "adult");
+  assert.equal(app.el("audience-adult").attributes["aria-pressed"], "true");
+  assert.equal(app.el("audience-child").attributes["aria-pressed"], "false");
+  app.el("start").click();
+  app.el("draw").click();
+  const saved = JSON.parse(app.record());
+  assert.equal(saved.audience, "adult");
+  assert.equal(saved.era, "adult");
+  assert.equal(app.el("room-entry").hidden, true);
+  const reload = loadApp(app.record());
+  reload.el("resume").click();
+  assert.equal(reload.el("current-era").textContent, "大人向け");
+  assert.equal(reload.el("card-title").textContent, app.el("card-title").textContent);
 });
 
