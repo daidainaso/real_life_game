@@ -204,7 +204,7 @@ test("壊れた記録を勝手に上書きせず、保存できない環境で�
   assert.notEqual(blocked.el("card-title").textContent, "どんな人生が待っていますか？");
 });
 
-test("大人向けで開始し、再読み込み後も対象と山札を維持する", () => {
+test("大人で開始し、再読み込み後も対象と山札を維持する", () => {
   const app = loadApp();
   app.el("audience-adult").click();
   assert.equal(app.el("audience").value, "adult");
@@ -218,7 +218,7 @@ test("大人向けで開始し、再読み込み後も対象と山札を維持�
   assert.equal(app.el("room-entry").hidden, true);
   const reload = loadApp(app.record());
   reload.el("resume").click();
-  assert.equal(reload.el("current-era").textContent, "大人向け");
+  assert.equal(reload.el("current-era").textContent, "大人");
   assert.equal(reload.el("card-title").textContent, app.el("card-title").textContent);
 });
 

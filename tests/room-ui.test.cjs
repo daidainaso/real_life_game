@@ -29,7 +29,7 @@ test('グループ画面：モード選択、参加、手番表示、連打防�
   }
   $('audience').value = 'child'; $('player-name').value = 'ホスト';
   const document = { getElementById: $, createElement: element, body: element() };
-  const context = vm.createContext({ document, LifeGame: game, audiences: { child: { label: '子ども向け' } }, WebSocket: Socket,
+  const context = vm.createContext({ document, LifeGame: game, audiences: { child: { label: '子供' } }, WebSocket: Socket,
     URL, location: { href: 'https://example.com/', protocol: 'https:' }, AbortSignal,
     localStorage: { getItem: () => null, setItem() {} },
     setTimeout: (fn, delay) => { const id = timers.size + 1; fn.delay = delay; timers.set(id, fn); return id; }, clearTimeout: id => timers.delete(id),
@@ -104,7 +104,7 @@ test('全接続の結果表示：終了通知の受信・取りこぼし・ス�
     }
     const context = vm.createContext({ document: { getElementById: $, createElement: element, body: element(),
       visibilityState: 'visible', addEventListener: (name, fn) => { listeners[name] = fn; } },
-      LifeGame: game, audiences: { child: { label: '子ども向け' } }, WebSocket: Socket, URL, AbortSignal,
+      LifeGame: game, audiences: { child: { label: '子供' } }, WebSocket: Socket, URL, AbortSignal,
       location: { href: 'https://example.com/', protocol: 'https:' },
       localStorage: { getItem: () => null, setItem() {} },
       setTimeout: fn => { const id = ++timerId; timers.set(id, fn); return id; }, clearTimeout: id => timers.delete(id),
