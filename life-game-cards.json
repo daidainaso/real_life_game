@@ -1,0 +1,222 @@
+{
+  "child": [
+    {
+      "id": "child-homework-play",
+      "title": "宿題がすぐ終わって、夕方たっぷり遊べた！",
+      "money": 0,
+      "move": 3,
+      "icon": "⚽"
+    },
+    {
+      "id": "child-new-year-money",
+      "title": "お年玉をいっぱい貰った",
+      "money": 10000,
+      "move": 4,
+      "icon": "🧧"
+    },
+    {
+      "id": "child-summer-homework",
+      "title": "夏休みの宿題を早く終わらせた。",
+      "money": 0,
+      "move": 4,
+      "icon": "📚"
+    },
+    {
+      "id": "child-ice-cream",
+      "title": "アイスをもらえた",
+      "money": 0,
+      "move": 2,
+      "icon": "🍦"
+    },
+    {
+      "id": "child-perfect-scores",
+      "title": "学校の試験で，100点を3回連続で取った。",
+      "money": 1000,
+      "move": 5,
+      "icon": "💯"
+    },
+    {
+      "id": "child-trip-postponed",
+      "title": "楽しみにしていた遠足が雨で延期になった…",
+      "money": 0,
+      "move": -2,
+      "icon": "🌧️"
+    },
+    {
+      "id": "child-home-late",
+      "title": "家の帰りが遅くなって両親に怒られた",
+      "money": 0,
+      "move": -2,
+      "icon": "🏠"
+    },
+    {
+      "id": "child-lots-of-homework",
+      "title": "宿題がたくさん出た。",
+      "money": 0,
+      "move": -3,
+      "icon": "📝"
+    },
+    {
+      "id": "child-friend-fight",
+      "title": "お友達とケンカしちゃった",
+      "money": 0,
+      "move": -2,
+      "icon": "💢"
+    },
+    {
+      "id": "child-retest",
+      "title": "赤点を4回連続で取り，追試になった。",
+      "money": 0,
+      "move": -4,
+      "icon": "📉"
+    }
+  ],
+  "adult": [
+    {
+      "id": "adult-pocket-money",
+      "title": "ポッケから入れたのを忘れていた千円札が出てきた！",
+      "money": 1000,
+      "move": 2,
+      "icon": "💴"
+    },
+    {
+      "id": "adult-class-cancelled",
+      "title": "授業が休講になった",
+      "money": 0,
+      "move": 3,
+      "icon": "🏫"
+    },
+    {
+      "id": "adult-income-up",
+      "title": "収入アップ。",
+      "money": 30000,
+      "move": 4,
+      "icon": "📈"
+    },
+    {
+      "id": "adult-meal-discount",
+      "title": "割引券で外食が安く食べられた",
+      "money": 2000,
+      "move": 2,
+      "icon": "🍽️"
+    },
+    {
+      "id": "adult-paid-leave",
+      "title": "有休を多めに取ることができた！",
+      "money": 0,
+      "move": 4,
+      "icon": "🏖️"
+    },
+    {
+      "id": "adult-no-umbrella",
+      "title": "傘を持っていない日に限って土砂降りの雨…",
+      "money": -1000,
+      "move": -2,
+      "icon": "☔"
+    },
+    {
+      "id": "adult-cheated-again",
+      "title": "2回目も浮気をされた",
+      "money": 0,
+      "move": -4,
+      "icon": "💔"
+    },
+    {
+      "id": "adult-unpaid-overtime",
+      "title": "サービス残業発生。",
+      "money": 0,
+      "move": -3,
+      "icon": "🕒"
+    },
+    {
+      "id": "adult-fired",
+      "title": "クビ。",
+      "money": -30000,
+      "move": -5,
+      "icon": "📦"
+    },
+    {
+      "id": "adult-bankruptcy",
+      "title": "倒産。",
+      "money": -50000,
+      "move": -5,
+      "icon": "🏢"
+    },
+    {
+      "id": "adult-work-mistake",
+      "title": "仕事で大きいミスをして残業した",
+      "money": 0,
+      "move": -3,
+      "icon": "😓"
+    },
+    {
+      "id": "adult-missed-marriage",
+      "title": "結婚する時期を逃した。",
+      "money": 0,
+      "move": -3,
+      "icon": "💍"
+    }
+  ],
+  "bonus": {
+    "child": [
+      {
+        "id": "goal-child-help",
+        "title": "ゴール後のお手伝いでお小遣いをもらった",
+        "money": 500,
+        "move": 0,
+        "icon": "🧹"
+      },
+      {
+        "id": "goal-child-prize",
+        "title": "頑張ったごほうびをもらった",
+        "money": 1000,
+        "move": 0,
+        "icon": "🏅"
+      },
+      {
+        "id": "goal-child-festival",
+        "title": "学祭のお店を手伝ってお礼をもらった",
+        "money": 1500,
+        "move": 0,
+        "icon": "🎪"
+      },
+      {
+        "id": "goal-child-gift",
+        "title": "ゴールのお祝いをもらった",
+        "money": 2000,
+        "move": 0,
+        "icon": "🎁"
+      }
+    ],
+    "adult": [
+      {
+        "id": "goal-adult-help",
+        "title": "地域のお手伝いで謝礼をもらった",
+        "money": 5000,
+        "move": 0,
+        "icon": "🤝"
+      },
+      {
+        "id": "goal-adult-work",
+        "title": "短期の仕事で報酬をもらった",
+        "money": 10000,
+        "move": 0,
+        "icon": "💼"
+      },
+      {
+        "id": "goal-adult-prize",
+        "title": "これまでの活躍が表彰された",
+        "money": 15000,
+        "move": 0,
+        "icon": "🏅"
+      },
+      {
+        "id": "goal-adult-gift",
+        "title": "ゴールのお祝い金をもらった",
+        "money": 20000,
+        "move": 0,
+        "icon": "🎁"
+      }
+    ]
+  }
+}

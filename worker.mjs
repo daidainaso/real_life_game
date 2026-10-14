@@ -1,5 +1,6 @@
 import cardData from './public/cards.js';
 import game from './public/script.js';
+import cardSettings from './public/card-settings-store.js';
 
 const json = (data, status = 200) => Response.json(data, { status, headers: { 'Cache-Control': 'no-store' } });
 const fail = (message, status = 400) => { throw Object.assign(new Error(message), { status }); };
@@ -7,14 +8,24 @@ const validName = value => {
   if (typeof value !== 'string' || !value.trim() || value.trim().length > 24) fail('名前を1〜24文字で入力してください。');
   return value.trim();
 };
-async function body(request) {
+async function body(request, maxLength = 4096) {
   if (!(request.headers.get('content-type') || '').startsWith('application/json')) fail('JSONで送信してください。', 415);
   const raw = await request.text();
-  if (raw.length > 4096) fail('入力が長すぎます。', 413);
+  if (raw.length > maxLength) fail('入力が長すぎます。', 413);
   let value;
   try { value = JSON.parse(raw); } catch { fail('入力を確認してください。'); }
   if (!value || typeof value !== 'object' || Array.isArray(value)) fail('入力を確認してください。');
   return value;
+}
+
+function roomSettings(input) {
+  const settings = cardData.audienceGame(input.audience);
+  settings.bonusCards = Object.hasOwn(input, 'bonusCards') ? cardSettings.validateCards(input.bonusCards, true) : cardData.bonusCards[input.audience];
+  if (Object.hasOwn(input, 'cards')) {
+    settings.cards = cardSettings.validateCards(input.cards).map(card => ({ ...card, era: input.audience }));
+    game.validateConfig(settings.config, settings.cards);
+  }
+  return settings;
 }
 
 export default {
@@ -24,8 +35,8 @@ export default {
       if (!url.pathname.startsWith('/api/')) return env.ASSETS.fetch(request);
       if (request.headers.get('Origin') && request.headers.get('Origin') !== url.origin) fail('この接続元からは操作できません。', 403);
       if (url.pathname === '/api/rooms' && request.method === 'POST') {
-        const input = await body(request);
-        validName(input.name); cardData.audienceGame(input.audience);
+        const input = await body(request, 131072);
+        validName(input.name); roomSettings(input);
         for (let attempt = 0; attempt < 10; attempt++) {
           const code = String(crypto.getRandomValues(new Uint32Array(1))[0] % 1000000).padStart(6, '0');
           const stub = env.ROOMS.get(env.ROOMS.idFromName(code));
@@ -82,11 +93,11 @@ export class GameRoom {
         const url = new URL(request.url), action = url.pathname.split('/').at(-1);
         if (action === 'create' && request.method === 'POST') {
           if (this.room) fail('この番号は使用中です。', 409);
-          const input = await body(request), settings = cardData.audienceGame(input.audience);
+          const input = await body(request, 131072), settings = roomSettings(input);
           const player = { id: crypto.randomUUID(), token: crypto.randomUUID(), name: validName(input.name), money: settings.config.initialMoney, position: 0 };
           this.room = { code: url.pathname.split('/')[3], audience: input.audience, cards: settings.cards,
             initialMoney: settings.config.initialMoney, goal: settings.config.goal, players: [player], turn: 0, started: false, finished: false,
-            bonusCards: cardData.bonusCards[input.audience], bonusDeck: [], bonusDeckIndex: 0,
+            bonusCards: settings.bonusCards, bonusDeck: [], bonusDeckIndex: 0,
             deck: [], deckIndex: 0, revision: 0, last: null };
           await this.ctx.storage.put('room', this.room);
           return json({ token: player.token, room: this.view(player) }, 201);

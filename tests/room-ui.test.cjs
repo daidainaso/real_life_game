@@ -29,13 +29,15 @@ test('グループ画面：モード選択、参加、手番表示、連打防�
   }
   $('audience').value = 'child'; $('player-name').value = 'ホスト';
   const document = { getElementById: $, createElement: element, body: element() };
+  const requests = [];
   const context = vm.createContext({ document, LifeGame: game, audiences: { child: { label: '子供' } }, WebSocket: Socket,
     URL, location: { href: 'https://example.com/', protocol: 'https:' }, AbortSignal,
-    localStorage: { getItem: () => null, setItem() {} },
+    localStorage: { getItem: key => key === 'lifeGame.cardSettings.v1' ? JSON.stringify({ child: [{ id: 'custom-child', title: '設定済みカード', money: 1234, move: 5, icon: '✦' }], adult: [{ id: 'custom-adult', title: '大人の設定', money: 5678, move: 2, icon: '✦' }] }) : null, setItem() {} },
     setTimeout: (fn, delay) => { const id = timers.size + 1; fn.delay = delay; timers.set(id, fn); return id; }, clearTimeout: id => timers.delete(id),
-    fetch: async () => ({ ok: true, json: async () => ({ token: 'secret', room: state }) }),
+    fetch: async (url, options) => { requests.push({ url, input: options.body ? JSON.parse(options.body) : null }); return { ok: true, json: async () => ({ token: 'secret', room: state }) }; },
   });
   vm.runInContext(fs.readFileSync('public/cards.js', 'utf8'), context);
+  vm.runInContext(fs.readFileSync('public/card-settings-store.js', 'utf8'), context);
   vm.runInContext(fs.readFileSync('public/script.js', 'utf8'), context);
   vm.runInContext(fs.readFileSync('public/rooms.js', 'utf8'), context);
   await $('start').click(); assert.equal($('play').hidden, false);
@@ -47,6 +49,10 @@ test('グループ画面：モード選択、参加、手番表示、連打防�
   assert.equal($('room-audience-adult').attributes['aria-pressed'], 'true');
   await $('room-audience-child').click();
   await $('create-room').click();
+  assert.equal(requests[0].input.cards[0].id, 'custom-child');
+  assert.equal(requests[0].input.cards[0].money, 1234);
+  assert.equal(requests[0].input.bonusCards.length, 4);
+  assert.equal(requests[0].input.bonusCards[0].move, 0);
   const ws = sockets[0]; assert.match(ws.url.href, /^wss:/);
   assert.equal($('room-start').disabled, true);
   ws.open(); ws.update(state); assert.equal($('room-start').disabled, false);

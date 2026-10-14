@@ -144,7 +144,12 @@
     try {
       const code = $('room-code').value.trim();
       if (!create && !/^\d{6}$/.test(code)) throw new Error('6桁の部屋番号を入力してください。');
-      const data = await api(create ? '' : `/${code}/join`, { name: $('player-name').value, audience: $('room-audience').value });
+      const input = { name: $('player-name').value, audience: $('room-audience').value };
+      if (create && typeof CardSettings !== 'undefined') {
+        try { const settings = CardSettings.load(localStorage); input.cards = settings[input.audience]; input.bonusCards = settings.bonus[input.audience]; }
+        catch { throw new Error('カード設定を読み込めません。設定画面で保存をやり直してから部屋を作成してください。'); }
+      }
+      const data = await api(create ? '' : `/${code}/join`, input);
       session = { code: data.room.code, token: data.token }; room = data.room;
       let saved = true;
       try { localStorage.setItem(key, JSON.stringify(session)); } catch { saved = false; }

@@ -1,0 +1,30 @@
+.settings-app { max-width: 960px; margin: auto; padding: 28px 24px 48px; }
+.settings-header { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 40px; }
+.settings-app h1 { font-size: 36px; margin-bottom: 16px; }
+.settings-app h2 { font-size: 18px; }
+.settings-app .intro { font-size: 16px; }
+.settings-toolbar { max-width: 460px; margin: 28px 0; }
+.settings-toolbar .audience-option { min-height: 100px; }
+.settings-list-heading { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+#card-count { font-size: 13px; color: #65786d; margin-left: 8px; }
+.settings-table-scroll { overflow-x: auto; margin: 20px 0; border: 1px solid #dedbcf; border-radius: 12px; }
+.settings-table { width: 100%; min-width: 720px; border-collapse: collapse; table-layout: fixed; background: #fffdf8; }
+.settings-table th { padding: 14px 10px; background: #e9ede3; text-align: left; font-size: 13px; }
+.settings-table td { padding: 10px; border-top: 1px solid #dedbcf; }
+.settings-table th:nth-child(1) { width: 85px; }
+.settings-table th:nth-child(3) { width: 145px; }
+.settings-table th:nth-child(4) { width: 125px; }
+.settings-table th:nth-child(5) { width: 65px; }
+.settings-table input { width: 100%; min-height: 44px; padding: 10px; font: inherit; font-size: 14px; border: 1px solid #d6dfcf; border-radius: 8px; background: #fffdf8; color: #223a35; }
+.settings-table input[readonly] { background: #f0f1eb; color: #65786d; }
+.settings-table .text-button { width: auto; margin: 0; padding: 8px 0; font-size: 13px; }
+#add-card-bottom { display: block; margin-left: auto; }
+.settings-small-button { display: inline-block; padding: 10px 14px; border: 1px solid #bdc9bb; border-radius: 10px; background: #fffdf8; color: #244b40; font: inherit; font-size: 13px; cursor: pointer; }
+.settings-save { position: sticky; bottom: 0; display: flex; align-items: center; justify-content: space-between; gap: 20px; padding: 16px 0; background: #f6f3eb; border-top: 1px solid #dedbcf; }
+.settings-save span { font-size: 13px; }
+.settings-save .primary { width: auto; min-width: 180px; margin: 0; }
+.settings-tools { margin-top: 32px; }
+.settings-tool-buttons { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; }
+.settings-tools .text-button { width: auto; }
+.settings-app input:focus-visible { outline: 3px solid #cd8433; outline-offset: 2px; }
+@media (max-width: 680px) { .settings-app { padding: 20px 16px 32px; } .settings-header .badge { font-size: 10px; } .settings-save .primary { min-width: 145px; } }

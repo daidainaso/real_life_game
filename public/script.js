@@ -125,7 +125,7 @@ function initializeGame() {
   function save() {
     hasRecord = true;
     if (!storageAvailable) return;
-    try { localStorage.setItem(LifeGame.key, JSON.stringify({ ...state, audience: gameConfig.eras[0].id })); } catch { storageFailure(); }
+    try { localStorage.setItem(LifeGame.key, JSON.stringify({ ...state, audience: gameConfig.eras[0].id, settingsSnapshot: { config: gameConfig, cards } })); } catch { storageFailure(); }
   }
   function screen(name) {
     for (const id of ["welcome", "play", "result"]) $(id).hidden = id !== name;
@@ -167,6 +167,10 @@ function initializeGame() {
   }
   function start() {
     ({ config: gameConfig, cards } = audienceGame($("audience").value || "child"));
+    if (typeof CardSettings !== "undefined") {
+      try { ({ config: gameConfig, cards } = CardSettings.game($("audience").value || "child", localStorage)); }
+      catch { notice("カード設定を読み込めないため、初期設定で開始します。カード設定画面で保存をやり直してください。"); }
+    }
     state = LifeGame.create(gameConfig, cards);
     save();
     showPlay();
@@ -225,6 +229,10 @@ function initializeGame() {
       try {
         const saved = JSON.parse(raw);
         if (saved.audience) ({ config: gameConfig, cards } = audienceGame(saved.audience));
+        if (saved.settingsSnapshot) {
+          LifeGame.validateConfig(saved.settingsSnapshot.config, saved.settingsSnapshot.cards);
+          ({ config: gameConfig, cards } = saved.settingsSnapshot);
+        }
         if (!LifeGame.validState(saved, gameConfig, cards)) throw new Error("invalid state");
         state = saved;
       } catch { notice("保存済みの記録を再開できません。設定が変更されたか、記録が壊れています。新しくゲームを始めてください。"); }

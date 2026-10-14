@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>カード設定 | リアル人生ゲーム</title>
+  <link rel="stylesheet" href="./style.css">
+  <link rel="stylesheet" href="./card-settings.css?v=20261014-table">
+  <script defer src="./cards.js"></script>
+  <script defer src="./card-settings-store.js?v=20261014-bonus"></script>
+  <script defer src="./card-settings.js?v=20261014-table"></script>
+</head>
+<body>
+  <main class="settings-app">
+    <header class="settings-header"><span class="badge">リアル人生ゲーム</span></header>
+    <p class="eyebrow">CARD SETTINGS</p>
+    <h1>カード設定</h1>
+    <p class="intro">子供用・大人用のカードを追加・編集できます。<br>カードの内容、金額、移動数、アイコンを設定してください。</p>
+    <p class="hint">編集後は「設定を保存」を押してください。保存した設定は、次のゲームから反映されます。</p>
+    <p class="hint">変更は進行中のゲームや作成済みの部屋には反映されません。</p>
+    <form id="settings-form">
+      <div class="settings-toolbar"><fieldset class="audience-picker"><legend>編集するカード</legend><div class="audience-options"><button type="button" data-audience="child" class="audience-option" aria-pressed="true"><strong>子供</strong><span>お小遣い・学校の出来事</span></button><button type="button" data-audience="adult" class="audience-option" aria-pressed="false"><strong>大人</strong><span>仕事・暮らしの出来事</span></button></div></fieldset></div>
+      <fieldset class="audience-picker"><legend>カードの種類</legend><div class="audience-options"><button type="button" data-kind="normal" class="audience-option" aria-pressed="true"><strong>通常カード</strong><span>ゴールまでに引くカード</span></button><button type="button" data-kind="bonus" class="audience-option" aria-pressed="false"><strong>ボーナスカード</strong><span>ゴール後に引くカード</span></button></div></fieldset>
+      <p id="bonus-hint" class="hint" hidden>ボーナスカードはゴール後の手番で使用します。内容・金額・アイコンを編集できます。移動数は0で固定です。</p>
+      <div class="settings-list-heading"><h2>カード一覧 <span id="card-count"></span></h2><button type="button" id="add-card" class="settings-small-button">＋ カードを追加</button></div>
+      <p class="hint">金額は、1,000円もらう場合は「1000」、500円支払う場合は「-500」と入力してください。移動数は、3マス進む場合は「3」、2マス戻る場合は「-2」、移動しない場合は「0」です。</p>
+      <div class="settings-table-scroll" tabindex="0" role="region" aria-label="カード一覧。横にスクロールできます。"><table class="settings-table"><caption class="sr-only">選択中のカード設定</caption><thead><tr><th scope="col">アイコン</th><th scope="col">出来事の内容</th><th scope="col">金額（円）</th><th scope="col">移動数（マス）</th><th scope="col"><span class="sr-only">操作</span></th></tr></thead><tbody id="settings-cards"></tbody></table></div>
+      <button type="button" id="add-card-bottom" class="settings-small-button">＋ カードを追加</button>
+      <p id="settings-message" class="notice" role="status" hidden></p>
+      <div class="settings-save"><span id="save-status" aria-live="polite">保存済みの設定</span><button type="submit" class="primary">設定を保存</button></div>
+    </form>
+    <section class="settings-tools"><h2>設定の管理</h2><p class="hint">設定はこのブラウザに保存されます。別の端末で使う場合は「JSONを書き出す」でファイルを保存し、移行先で「JSONを読み込む」を選んでから「設定を保存」を押してください。子供用・大人用の両方の設定をまとめて移せます。</p><p class="hint">「設定ファイルを出力」は、アプリ全体の初期設定を変更するための機能です。保存した設定で遊ぶ場合は、出力する必要はありません。</p><div class="settings-tool-buttons"><button id="export-json" type="button" class="settings-small-button">JSONを書き出す</button><label class="settings-small-button">JSONを読み込む<input id="import-json" type="file" accept=".json,application/json" class="sr-only"></label><button id="export-source" type="button" class="settings-small-button">設定ファイルを出力</button><button id="reset-cards" type="button" class="text-button">選択中のカードを初期設定に戻す</button></div></section>
+    <dialog id="settings-confirm"><form method="dialog"><h2>初期設定に戻しますか？</h2><p>現在選択している対象・種類のカードを、最初の内容に戻します。追加・編集した内容は失われます。「設定を保存」を押すと保存済みの設定も更新されます。</p><div class="dialog-actions"><button value="cancel" class="cancel" autofocus>キャンセル</button><button value="ok" class="primary">初期設定に戻す</button></div></form></dialog>
+  </main>
+</body>
+</html>

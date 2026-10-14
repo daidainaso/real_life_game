@@ -93,4 +93,40 @@ test('Workers実行環境：共有山札、WebSocket同期、権限、重複操�
   assert.equal((await api('/' + other.room.code, null, other.token)).room.status, 'waiting');
   await mf.unsafeEvictDurableObject('game', 'GameRoom', { name: host.room.code });
   assert.deepEqual((await api(route, null, host.token)).room, state);
+  for (const audience of ['child', 'adult']) {
+    const cards = [{ id: 'custom-card', title: 'ホストが設定したカード', money: 1234, move: 5, icon: '✦' }];
+    for (const invalid of [[], [{ ...cards[0], move: 0 }], [{ ...cards[0], money: 0.5 }], [cards[0], cards[0]], null]) {
+      assert.equal((await api('', { name: '不正な設定', audience, cards: invalid })).status, 400);
+    }
+    assert.equal((await api('', { name: '不正なボーナス', audience, bonusCards: [{ ...cards[0], move: 1 }] })).status, 400);
+    const custom = await api('', { name: '設定ホスト', audience, cards, bonusCards: [{ ...cards[0], id: 'custom-bonus', move: 0, money: 7654 }] });
+    assert.equal(custom.status, 201);
+    const customRoute = '/' + custom.room.code;
+    const joined = await api(customRoute + '/join', { name: '設定参加者', cards: [{ ...cards[0], money: 9999 }] });
+    assert.equal(joined.status, 201);
+    const hostSocket = await connect(custom.room.code, custom.token);
+    let customState = (await hostSocket.next()).room;
+    const guestSocket = await connect(custom.room.code, joined.token); await guestSocket.next();
+    hostSocket.ws.send(JSON.stringify({ type: 'start', revision: customState.revision }));
+    customState = (await hostSocket.next()).room; await guestSocket.next();
+    for (let turn = 0; turn < 2; turn++) {
+      await mf.unsafeEvictDurableObject('game', 'GameRoom', { name: custom.room.code, webSockets: 'hibernate' });
+      (turn === 0 ? hostSocket : guestSocket).ws.send(JSON.stringify({ type: 'draw', revision: customState.revision }));
+      customState = (await hostSocket.next()).room;
+      assert.deepEqual((await guestSocket.next()).room.last, customState.last);
+      assert.equal(customState.last.card.title, cards[0].title);
+      assert.equal(customState.last.card.money, 1234);
+      assert.equal(customState.players[turn].money, 101234);
+      assert.equal(customState.players[turn].position, 5);
+    }
+    const separate = await api('', { name: '変更後の設定', audience, cards: [{ ...cards[0], money: 5678 }] });
+    assert.equal(separate.status, 201);
+    hostSocket.ws.send(JSON.stringify({ type: 'draw', revision: customState.revision }));
+    customState = (await hostSocket.next()).room; await guestSocket.next();
+    assert.equal(customState.last.card.money, 1234);
+    hostSocket.ws.close(); guestSocket.ws.close();
+  }
+  const largeCards = Array.from({ length: 200 }, (_, i) => ({ id: `custom-${i}`, title: '長いカード内容'.repeat(10), money: 10, move: 1, icon: '✦' }));
+  assert.equal((await api('', { name: '最大枚数', audience: 'adult', cards: largeCards })).status, 201);
+  assert.equal((await api('', { name: '枚数超過', audience: 'adult', cards: [...largeCards, { ...largeCards[0], id: 'extra' }] })).status, 400);
 });
