@@ -34,6 +34,14 @@ export default {
       const url = new URL(request.url);
       if (!url.pathname.startsWith('/api/')) return env.ASSETS.fetch(request);
       if (request.headers.get('Origin') && request.headers.get('Origin') !== url.origin) fail('この接続元からは操作できません。', 403);
+      if (url.pathname === '/api/admin/rankings/delete') {
+        if (request.method !== 'POST') fail('対応していない操作です。', 405);
+        const input = await body(request);
+        if (typeof input.id !== 'string' || !/^[a-zA-Z0-9-]{1,120}$/.test(input.id)) fail('削除する記録を確認してください。');
+        return env.ROOMS.get(env.ROOMS.idFromName('event-rankings')).fetch(new Request('https://internal/rankings/delete', {
+          method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id: input.id }),
+        }));
+      }
       if (url.pathname === '/api/rankings' || url.pathname === '/api/rankings/paper') {
         const stub = env.ROOMS.get(env.ROOMS.idFromName('event-rankings'));
         if (request.method === 'GET' && url.pathname === '/api/rankings') return stub.fetch(request);
@@ -186,11 +194,24 @@ export class GameRoom {
           }
           fail('グループを作成できませんでした。もう一度お試しください。', 503);
         }
+        if (url.pathname === '/rankings/delete' && request.method === 'POST') {
+          const { id } = await body(request);
+          const entries = await this.ctx.storage.get('rankings') || [];
+          const deleted = await this.ctx.storage.get('deletedRankings') || [];
+          if (!deleted.includes(id)) {
+            if (!entries.some(entry => entry.id === id)) fail('記録が見つかりません。一覧を更新してください。', 404);
+            deleted.push(id);
+          }
+          const remaining = entries.filter(entry => entry.id !== id);
+          await this.ctx.storage.put({ rankings: remaining, deletedRankings: deleted });
+          return json({ entries: remaining.sort((a, b) => b.money - a.money) });
+        }
         if (url.pathname === '/api/rankings' || url.pathname === '/rankings') {
           const entries = await this.ctx.storage.get('rankings') || [];
           if (request.method === 'POST') {
             const input = await body(request, 32768);
-            for (const entry of input.entries) if (!entries.some(e => e.id === entry.id)) entries.push(entry);
+            const deleted = await this.ctx.storage.get('deletedRankings') || [];
+            for (const entry of input.entries) if (!deleted.includes(entry.id) && !entries.some(e => e.id === entry.id)) entries.push(entry);
             await this.ctx.storage.put('rankings', entries);
           }
           return json({ entries: entries.sort((a, b) => b.money - a.money) });

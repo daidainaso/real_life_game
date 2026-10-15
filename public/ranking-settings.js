@@ -19,12 +19,28 @@
     $('saved-rankings').replaceChildren(...sorted.map(item => {
       const li = document.createElement('li');
       li.textContent = `${sorted.findIndex(other => other.money === item.money) + 1}位 · ${item.name}：${item.money.toLocaleString('ja-JP')}円（${item.source}）`;
+      const remove = document.createElement('button');
+      remove.type = 'button';
+      remove.className = 'settings-small-button';
+      remove.textContent = '削除';
+      remove.setAttribute('aria-label', `${item.name}さんのランキング記録を削除`);
+      remove.disabled = saving;
+      remove.addEventListener('click', async () => {
+        if (saving || !window.confirm(`${item.name}さんの記録（${item.money.toLocaleString('ja-JP')}円）をランキングから削除しますか？この操作は取り消せません。`)) return;
+        saving = true; render();
+        try {
+          entries = await request({ id: item.id }, './api/admin/rankings/delete');
+          message('ランキングから記録を削除しました。');
+        } catch (error) { message(error.message); }
+        finally { saving = false; render(); }
+      });
+      li.append(remove);
       return li;
     }));
     status();
   }
-  async function request(input) {
-    const response = await fetch(input ? './api/rankings/paper' : './api/rankings', {
+  async function request(input, path) {
+    const response = await fetch(path || (input ? './api/rankings/paper' : './api/rankings'), {
       method: input ? 'POST' : 'GET', cache: 'no-store', headers: { 'Content-Type': 'application/json' },
       body: input ? JSON.stringify(input) : undefined, signal: AbortSignal.timeout(10000),
     });
@@ -33,8 +49,11 @@
     return data.entries;
   }
   async function load() {
+    if (saving) return;
+    saving = true; render();
     try { entries = await request(); $('ranking-load-message').textContent = ''; render(); }
     catch (error) { $('ranking-load-message').textContent = error.message; }
+    finally { saving = false; render(); }
   }
   buttons.forEach(button => button.addEventListener('click', () => { audience = button.dataset.audience; render(); }));
   fields.forEach(id => $(id).addEventListener('input', status));

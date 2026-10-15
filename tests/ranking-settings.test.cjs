@@ -17,12 +17,17 @@ test('ランキング設定：1人ずつ保存、区分切替、失敗後の再�
   const elements = new Map(), audiences = ['child', 'adult'].map(audience => Object.assign(element(), { dataset: { audience } }));
   const $ = id => { if (!elements.has(id)) elements.set(id, element()); return elements.get(id); };
   const calls = [];
-  let fail = true, id = 0;
+  let fail = true, id = 0, confirmDelete = false, deleteCalls = 0;
   const context = vm.createContext({
     document: { getElementById: $, querySelectorAll: () => audiences, createElement: element },
-    window: { addEventListener() {} }, crypto: { randomUUID: () => `id-${++id}` }, AbortSignal,
+    window: { addEventListener() {}, confirm: () => confirmDelete }, crypto: { randomUUID: () => `id-${++id}` }, AbortSignal,
     fetch: async (path, options) => {
       if (!options.body) return { ok: true, json: async () => ({ entries: [] }) };
+      if (path === './api/admin/rankings/delete') {
+        deleteCalls++;
+        assert.equal(JSON.parse(options.body).id, 'id-1');
+        return { ok: !fail, json: async () => fail ? { error: '削除に失敗しました。' } : { entries: [] } };
+      }
       const input = JSON.parse(options.body); calls.push(input);
       return { ok: !fail, json: async () => fail ? { error: '通信に失敗しました。' } : { entries: input.entries } };
     },
@@ -52,6 +57,16 @@ test('ランキング設定：1人ずつ保存、区分切替、失敗後の再�
   assert.equal($('save-results').disabled, true);
   assert.equal($('saved-rankings').children.length, 1);
   assert.match($('saved-rankings').children[0].textContent, /グループ/);
+  await $('saved-rankings').children[0].children[0].click();
+  assert.equal(deleteCalls, 0);
+  confirmDelete = true; fail = true;
+  await $('saved-rankings').children[0].children[0].click();
+  assert.equal($('saved-rankings').children.length, 1);
+  assert.match($('ranking-settings-message').textContent, /削除に失敗/);
+  fail = false;
+  await $('saved-rankings').children[0].children[0].click();
+  assert.equal(deleteCalls, 2);
+  assert.equal($('saved-rankings').children.length, 0);
   await audiences[1].click(); fill('大人の参加者', '-500');
   $('result-source').value = 'ひとり'; await save();
   assert.equal(calls[2].entries.length, 1);

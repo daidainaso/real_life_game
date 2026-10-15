@@ -23,6 +23,15 @@ test('共通ランキング：公開閲覧、暗証番号なしの紙登録、�
   assert.equal(entries.length, 2); assert.equal(entries[0].money, 120000);
   await mf.unsafeEvictDurableObject('ranking-test', 'GameRoom', { name: 'event-rankings' });
   assert.deepEqual((await api('rankings')).entries, entries);
+  assert.equal((await api('admin/rankings/delete', { id: '' })).status, 400);
+  assert.equal((await api('admin/rankings/delete', { id: 'missing' })).status, 404);
+  assert.equal((await api('admin/rankings/delete', { id: 'paper-paper-test' })).entries.length, 1);
+  assert.equal((await api('admin/rankings/delete', { id: 'paper-paper-test' })).status, 200);
+  await mf.unsafeEvictDurableObject('ranking-test', 'GameRoom', { name: 'event-rankings' });
+  assert.equal((await api('rankings/paper', paper)).entries.length, 1);
+  assert.equal((await api('rankings')).entries[0].id, 'solo-solo-test');
+  // 以降の既存検証用に、別の記録として登録します。
+  await api('rankings/paper', { ...paper, id: 'paper-replacement' });
   const host = await api('rooms', { name: 'ホスト', audience: 'child' });
   const route = `rooms/${host.room.code}`;
   const guest = await api(`${route}/join`, { name: '参加者' });
