@@ -3,7 +3,7 @@ const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const vm = require('node:vm');
 
-test('ランキング設定：区分切替、表入力、削除、一括保存、失敗後の再試行', async () => {
+test('ランキング設定：1人ずつ保存、区分切替、失敗後の再試行', async () => {
   function element() {
     return { value: '', textContent: '', hidden: false, disabled: false, children: [], handlers: {}, dataset: {},
       addEventListener(name, fn) { this.handlers[name] = fn; },
@@ -30,33 +30,34 @@ test('ランキング設定：区分切替、表入力、削除、一括保存�
   vm.runInContext(fs.readFileSync('public/ranking-settings.js', 'utf8'), context);
   await new Promise(resolve => setImmediate(resolve));
   function fill(name, money) {
-    const row = $('ranking-drafts').children[0];
-    for (const [index, value] of [name, money].entries()) {
-      const input = row.children[index].children[0]; input.value = value; input.handlers.input();
-    }
+    $('result-name').value = name; $('result-money').value = money;
+    $('result-name').handlers.input();
   }
-  await $('add-result').click(); fill('子供の参加者', '120000');
-  const mode = $('ranking-drafts').children[0].children[2].children[0];
-  mode.value = 'グループ'; mode.handlers.change();
-  await audiences[1].click(); await $('add-result-bottom').click(); fill('大人の参加者', '-500');
-  await audiences[0].click();
-  assert.equal($('ranking-drafts').children[0].children[0].children[0].value, '子供の参加者');
+  $('result-source').value = 'グループ';
+  fill('子供の参加者', '120000');
   const save = () => $('ranking-settings-form').handlers.submit({ preventDefault() {} });
   await save();
-  assert.equal(calls[0].entries.length, 2);
-  assert.equal(calls[0].entries[1].money, -500);
+  assert.equal(calls[0].entries.length, 1);
+  assert.equal(calls[0].entries[0].money, 120000);
   assert.equal(calls[0].entries[0].source, 'グループ');
-  assert.equal(calls[0].entries[1].source, 'ひとり');
+  assert.equal(calls[0].entries[0].audience, 'child');
   assert.match($('ranking-settings-message').textContent, /通信に失敗/);
-  assert.equal(Object.hasOwn(calls[0], 'pin'), false);
-  assert.equal($('ranking-drafts').children.length, 1);
+  assert.equal($('result-name').value, '子供の参加者');
+  assert.equal($('result-money').value, '120000');
+  assert.equal($('save-results').disabled, false);
   fail = false; await save();
-  assert.deepEqual(calls[0].entries, calls[1].entries);
-  assert.equal($('ranking-drafts').children.length, 0);
-  assert.equal($('saved-rankings').children.length, 1);
-  assert.match($('saved-rankings').children[0].textContent, /（グループ）/);
+  assert.equal(calls[1].entries[0].name, calls[0].entries[0].name);
+  assert.equal($('result-name').value, '');
+  assert.equal($('result-money').value, '');
   assert.equal($('save-results').disabled, true);
-  await $('add-result').click();
-  await $('ranking-drafts').children[0].children[3].children[0].click();
-  assert.equal($('ranking-drafts').children.length, 0);
+  assert.equal($('saved-rankings').children.length, 1);
+  assert.match($('saved-rankings').children[0].textContent, /グループ/);
+  await audiences[1].click(); fill('大人の参加者', '-500');
+  $('result-source').value = 'ひとり'; await save();
+  assert.equal(calls[2].entries.length, 1);
+  assert.equal(calls[2].entries[0].audience, 'adult');
+  assert.equal(calls[2].entries[0].money, -500);
+  fill('不正な所持金', '1.5'); await save();
+  assert.equal(calls.length, 3);
+  assert.equal($('result-money').value, '1.5');
 });

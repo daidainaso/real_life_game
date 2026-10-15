@@ -5,8 +5,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>ランキング設定 | リアル人生ゲーム</title>
   <link rel="stylesheet" href="./style.css?v=20261015-ranking-list">
-  <link rel="stylesheet" href="./card-settings.css?v=20261015-mode">
-  <script defer src="./ranking-settings.js?v=20261015-mode"></script>
+  <link rel="stylesheet" href="./card-settings.css?v=20261015-single">
+  <script defer src="./ranking-settings.js?v=20261015-single"></script>
 </head>
 <body>
   <main class="settings-app">
@@ -14,13 +14,16 @@
     <p class="eyebrow">RANKING SETTINGS</p>
     <h1>ランキング設定</h1>
     <p class="intro">参加者の結果を追加できます。<br>表示名と最終所持金を入力し、参加形式を「グループ」「ひとり」から選んでください。</p>
-    <p class="hint">入力後は「結果を保存」を押してください。子供・大人の両方の入力をまとめて保存し、全員のランキングに反映します。表示名は全員に公開されます。</p>
+    <p class="hint">入力後は「結果を保存」を押してください。1人分ずつ保存し、全員のランキングに反映します。表示名は全員に公開されます。</p>
     <form id="ranking-settings-form">
       <div class="settings-toolbar"><fieldset class="audience-picker"><legend>結果を追加する区分</legend><div class="audience-options"><button type="button" data-audience="child" class="audience-option" aria-pressed="true"><strong>子供</strong><span>子供のランキング</span></button><button type="button" data-audience="adult" class="audience-option" aria-pressed="false"><strong>大人</strong><span>大人のランキング</span></button></div></fieldset></div>
-      <div class="settings-list-heading"><h2>追加する結果 <span id="ranking-draft-count"></span></h2><button type="button" id="add-result" class="settings-small-button">＋ 結果を追加</button></div>
-      <p class="hint">所持金は円単位の整数で入力してください。例：100,000円は「100000」、借金500円は「-500」です。保存前の行は編集・削除できます。</p>
-      <div class="settings-table-scroll" tabindex="0" role="region" aria-label="追加する結果。横にスクロールできます。"><table class="settings-table ranking-settings-table"><caption class="sr-only">追加する参加者の結果</caption><thead><tr><th scope="col">参加者の表示名</th><th scope="col">最終所持金（円）</th><th scope="col">参加形式</th><th scope="col">操作</th></tr></thead><tbody id="ranking-drafts"></tbody></table></div>
-      <button type="button" id="add-result-bottom" class="settings-small-button">＋ 結果を追加</button>
+      <div class="settings-editor">
+        <h2>参加者の結果を1件ずつ登録</h2>
+        <p class="hint">所持金は円単位の整数で入力してください。例：100000、借金は-500です。</p>
+        <label>参加者の表示名<input id="result-name" required maxlength="24" autocomplete="off"></label>
+        <label>最終所持金（円）<input id="result-money" type="number" required step="1"></label>
+        <label>参加形式<select id="result-source"><option>ひとり</option><option>グループ</option></select></label>
+      </div>
       <p id="ranking-settings-message" class="notice" role="status" hidden></p>
       <div class="settings-save"><span id="ranking-save-status" aria-live="polite">未保存の結果はありません</span><button id="save-results" type="submit" class="primary">結果を保存</button></div>
     </form>
