@@ -73,21 +73,45 @@ export default {
           }));
           if (response.status !== 409) return response;
         }
-        fail('部屋を作れませんでした。もう一度お試しください。', 503);
+        fail('グループを作れませんでした。もう一度お試しください。', 503);
       }
-      const match = url.pathname.match(/^\/api\/rooms\/(\d{6})(?:\/(join|socket))?$/);
-      if (!match) fail('部屋番号を確認してください。', 404);
+      if (['/api/groups', '/api/admin/groups'].includes(url.pathname) && request.method === 'GET') {
+        const groups = await Promise.all(Array.from({ length: 8 }, async (_, index) => {
+          const response = await env.ROOMS.get(env.ROOMS.idFromName(`group-${index + 1}`)).fetch(new Request(`https://internal/api/groups/${index + 1}/${url.pathname === '/api/admin/groups' ? 'admin-status' : 'status'}`));
+          if (!response.ok) return { group: index + 1, status: 'unknown' };
+          return response.json();
+        }));
+        return json({ groups });
+      }
+      const adminFinish = url.pathname.match(/^\/api\/admin\/groups\/([1-8])\/finish$/);
+      if (adminFinish && request.method === 'POST') {
+        const input = await body(request);
+        return env.ROOMS.get(env.ROOMS.idFromName(`group-${adminFinish[1]}`)).fetch(new Request(`https://internal/api/groups/${adminFinish[1]}/finish`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(input) }));
+      }
+      const group = url.pathname.match(/^\/api\/groups\/([1-8])\/(create|join)$/);
+      if (group && request.method === 'POST') {
+        const input = await body(request, 131072);
+        return env.ROOMS.get(env.ROOMS.idFromName(`group-${group[1]}`)).fetch(new Request(request.url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(input) }));
+      }
+      const match = url.pathname.match(/^\/api\/rooms\/(\d{6})(?:\/(join|socket|leave))?$/);
+      if (!match) fail('グループ番号を確認してください。', 404);
+      if (match[2] === 'leave' && request.method === 'POST') {
+        await body(request);
+        return env.ROOMS.get(env.ROOMS.idFromName(match[1])).fetch(new Request(request.url, { method: 'POST', headers: request.headers }));
+      }
       return env.ROOMS.get(env.ROOMS.idFromName(match[1])).fetch(request);
     } catch (error) { return json({ error: error.message }, error.status || 400); }
   },
 };
 
 export class GameRoom {
-  constructor(ctx) {
+  constructor(ctx, env) {
     this.ctx = ctx;
+    this.env = env;
     ctx.blockConcurrencyWhile(async () => {
       this.room = await ctx.storage.get('room');
       if (this.room) {
+        this.room.controlToken ??= this.room.players[0]?.token;
         this.room.goal ??= 50;
         for (const player of this.room.players) player.position ??= 0;
         this.room.bonusCards ??= cardData.bonusCards[this.room.audience];
@@ -99,12 +123,12 @@ export class GameRoom {
   }
   member(token) {
     const player = this.room?.players.find(p => p.token === token);
-    if (!player) fail('この部屋への参加情報がありません。', 403);
+    if (!player) fail('このグループへの参加情報がありません。', 403);
     return player;
   }
   view(player) {
     const r = this.room;
-    return { code: r.code, audience: r.audience, status: r.finished ? 'finished' : r.started ? 'playing' : 'waiting', revision: r.revision,
+    return { code: r.code, group: r.group, audience: r.audience, status: r.finished ? 'finished' : r.started ? 'playing' : 'waiting', revision: r.revision,
       host: r.players[0].id === player.id, yourIndex: r.players.indexOf(player), turn: r.turn, last: r.last,
       goal: r.goal, players: r.players.map(p => ({ id: p.id, name: p.name, money: p.money, position: p.position, finished: p.position >= r.goal })) };
   }
@@ -119,6 +143,49 @@ export class GameRoom {
     return this.ctx.blockConcurrencyWhile(async () => {
       try {
         const url = new URL(request.url), action = url.pathname.split('/').at(-1);
+        const groupFinish = url.pathname.match(/^\/api\/groups\/([1-8])\/finish$/);
+        if (groupFinish && request.method === 'POST') {
+          const input = await body(request);
+          const current = await this.ctx.storage.get('groupSession');
+          if (!current) fail('このグループは未作成です。', 404);
+          if (input.code !== current.code) fail('グループが作り直されています。一覧を更新してください。', 409);
+          return this.env.ROOMS.get(this.env.ROOMS.idFromName(current.code)).fetch(new Request(`https://internal/api/rooms/${current.code}/finish`, { method: 'POST', headers: { Authorization: `Bearer ${current.token}` } }));
+        }
+        const groupStatus = url.pathname.match(/^\/api\/groups\/([1-8])\/(status|admin-status)$/);
+        if (groupStatus && request.method === 'GET') {
+          const current = await this.ctx.storage.get('groupSession');
+          if (!current) return json({ group: Number(groupStatus[1]), status: 'empty', count: 0 });
+          const response = await this.env.ROOMS.get(this.env.ROOMS.idFromName(current.code)).fetch(new Request(`https://internal/api/rooms/${current.code}/control`, { headers: { Authorization: `Bearer ${current.token}` } }));
+          if (!response.ok) return json({ group: Number(groupStatus[1]), status: 'unknown' });
+          const { room } = await response.json();
+          return json({ group: Number(groupStatus[1]), status: room.status, count: room.players.length, audience: room.audience,
+            ...(action === 'admin-status' ? { code: current.code } : {}) });
+        }
+        const group = url.pathname.match(/^\/api\/groups\/([1-8])\/(create|join)$/);
+        if (group && request.method === 'POST') {
+          const current = await this.ctx.storage.get('groupSession');
+          if (action === 'join') {
+            if (!current) fail('このグループはまだ作成されていません。ホストが作成するまでお待ちください。', 404);
+            return this.env.ROOMS.get(this.env.ROOMS.idFromName(current.code)).fetch(new Request(`https://internal/api/rooms/${current.code}/join`, request));
+          }
+          if (current) {
+            const response = await this.env.ROOMS.get(this.env.ROOMS.idFromName(current.code)).fetch(new Request(`https://internal/api/rooms/${current.code}/control`, { headers: { Authorization: `Bearer ${current.token}` } }));
+            if (!response.ok) fail('グループの状態を確認できません。もう一度お試しください。', 503);
+            if ((await response.json()).room.status !== 'finished') fail('このグループは使用中です。参加するか、別のグループを選んでください。', 409);
+          }
+          const input = await body(request, 131072);
+          input.group = Number(group[1]);
+          for (let attempt = 0; attempt < 10; attempt++) {
+            const code = String(crypto.getRandomValues(new Uint32Array(1))[0] % 1000000).padStart(6, '0');
+            const response = await this.env.ROOMS.get(this.env.ROOMS.idFromName(code)).fetch(new Request(`https://internal/api/rooms/${code}/create`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(input) }));
+            if (response.status === 409) continue;
+            if (!response.ok) return response;
+            const data = await response.json();
+            await this.ctx.storage.put('groupSession', { code, token: data.token });
+            return json(data, 201);
+          }
+          fail('グループを作成できませんでした。もう一度お試しください。', 503);
+        }
         if (url.pathname === '/api/rankings' || url.pathname === '/rankings') {
           const entries = await this.ctx.storage.get('rankings') || [];
           if (request.method === 'POST') {
@@ -132,17 +199,51 @@ export class GameRoom {
           if (this.room) fail('この番号は使用中です。', 409);
           const input = await body(request, 131072), settings = roomSettings(input);
           const player = { id: crypto.randomUUID(), token: crypto.randomUUID(), name: validName(input.name), money: settings.config.initialMoney, position: 0 };
-          this.room = { code: url.pathname.split('/')[3], audience: input.audience, cards: settings.cards,
+          this.room = { code: url.pathname.split('/')[3], controlToken: player.token, group: input.group, audience: input.audience, cards: settings.cards,
             initialMoney: settings.config.initialMoney, goal: settings.config.goal, players: [player], turn: 0, started: false, finished: false,
             bonusCards: settings.bonusCards, bonusDeck: [], bonusDeckIndex: 0,
             deck: [], deckIndex: 0, revision: 0, last: null };
           await this.ctx.storage.put('room', this.room);
           return json({ token: player.token, room: this.view(player) }, 201);
         }
-        if (!this.room) fail('部屋が見つかりません。番号を確認してください。', 404);
+        if (!this.room) fail('グループが見つかりません。番号を確認してください。', 404);
+        if (action === 'control' && request.method === 'GET') {
+          if (request.headers.get('Authorization') !== `Bearer ${this.room.controlToken}`) fail('管理情報を確認できません。', 403);
+          return json({ room: { audience: this.room.audience, status: this.room.finished ? 'finished' : this.room.started ? 'playing' : 'waiting', players: this.room.players.map(p => ({ id: p.id })) } });
+        }
+        if (action === 'leave' && request.method === 'POST') {
+          const token = request.headers.get('Authorization')?.replace(/^Bearer /, '');
+          const r = this.room;
+          if (r.leftTokens?.includes(token)) return json({ left: true });
+          const player = this.member(token), index = r.players.indexOf(player);
+          r.players.splice(index, 1);
+          (r.leftTokens ||= []).push(token);
+          if (index < r.turn) r.turn--;
+          r.turn = r.players.length ? r.turn % r.players.length : 0;
+          if (!r.players.length || (r.started && r.players.every(p => p.position >= r.goal))) r.finished = true;
+          r.revision++;
+          await this.ctx.storage.put('room', r);
+          for (const ws of this.ctx.getWebSockets()) {
+            if (ws.deserializeAttachment().token === token) {
+              try { ws.send(JSON.stringify({ type: 'left' })); ws.close(1000, '退出しました'); } catch {}
+            }
+          }
+          this.broadcast();
+          return json({ left: true });
+        }
+        if (action === 'finish' && request.method === 'POST') {
+          if (request.headers.get('Authorization') !== `Bearer ${this.room.controlToken}`) fail('管理情報を確認できません。', 403);
+          if (!this.room.finished) {
+            this.room.finished = true;
+            this.room.revision++;
+            await this.ctx.storage.put('room', this.room);
+            this.broadcast();
+          }
+          return json({ finished: true });
+        }
         if (action === 'join' && request.method === 'POST') {
-          if (this.room.started) fail('開始済みの部屋には参加できません。', 409);
-          if (this.room.players.length >= 12) fail('部屋は満員です（最大12人）。', 409);
+          if (this.room.started) fail('開始済みのグループには参加できません。', 409);
+          if (this.room.players.length >= 12) fail('グループは満員です（最大12人）。', 409);
           const input = await body(request), name = validName(input.name);
           if (this.room.players.some(p => p.name === name)) fail('別の名前を入力してください。');
           const player = { id: crypto.randomUUID(), token: crypto.randomUUID(), name, money: this.room.initialMoney, position: 0 };

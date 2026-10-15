@@ -30,11 +30,16 @@ test('グループ画面：モード選択、参加、手番表示、連打防�
   $('audience').value = 'child'; $('player-name').value = 'ホスト';
   const document = { getElementById: $, createElement: element, body: element() };
   const requests = [];
+  let leaveFails = false;
   const context = vm.createContext({ document, LifeGame: game, audiences: { child: { label: '子供' } }, WebSocket: Socket,
     URL, location: { href: 'https://example.com/', protocol: 'https:' }, AbortSignal,
     localStorage: { getItem: key => key === 'lifeGame.cardSettings.v1' ? JSON.stringify({ child: [{ id: 'custom-child', title: '設定済みカード', money: 1234, move: 5, icon: '✦' }], adult: [{ id: 'custom-adult', title: '大人の設定', money: 5678, move: 2, icon: '✦' }] }) : null, setItem() {} },
     setTimeout: (fn, delay) => { const id = timers.size + 1; fn.delay = delay; timers.set(id, fn); return id; }, clearTimeout: id => timers.delete(id),
-    fetch: async (url, options) => { requests.push({ url, input: options.body ? JSON.parse(options.body) : null }); return { ok: true, json: async () => ({ token: 'secret', room: state }) }; },
+    fetch: async (url, options) => {
+      if (url.endsWith('/leave') && leaveFails) return { ok: false, json: async () => ({ error: '退出できませんでした。' }) };
+      if (url === './api/groups') return { ok: true, json: async () => ({ groups: Array.from({ length: 8 }, (_, index) => ({ group: index + 1, status: index === 1 ? 'waiting' : index === 2 ? 'playing' : 'empty', count: index === 1 ? 2 : index === 2 ? 3 : 0 })) }) };
+      requests.push({ url, input: options.body ? JSON.parse(options.body) : null }); return { ok: true, json: async () => ({ token: 'secret', room: state }) };
+    },
   });
   vm.runInContext(fs.readFileSync('public/cards.js', 'utf8'), context);
   vm.runInContext(fs.readFileSync('public/card-settings-store.js', 'utf8'), context);
@@ -43,13 +48,27 @@ test('グループ画面：モード選択、参加、手番表示、連打防�
   await $('start').click(); assert.equal($('play').hidden, false);
   assert.equal($('event-ranking').hidden, true);
   await $('home').click(); assert.equal($('welcome').hidden, false); assert.equal($('play').hidden, true);
-  $('group-mode').click(); assert.equal($('welcome').hidden, true); assert.equal($('room-entry').hidden, false);
+  await $('group-mode').click(); assert.equal($('welcome').hidden, true); assert.equal($('room-entry').hidden, false);
+  assert.equal($('room-group-1').children[1].textContent, '未作成');
+  assert.equal($('enter-room').disabled, false);
+  assert.equal($('enter-room').textContent, 'このグループで始める');
+  await $('room-group-2').click();
+  assert.equal($('room-group-2').children[1].textContent, '参加受付中 · 2/12人');
+  assert.equal($('enter-room').disabled, false);
+  assert.equal($('enter-room').textContent, 'このグループに参加する');
+  await $('room-group-3').click();
+  assert.equal($('enter-room').disabled, true);
+  assert.equal($('enter-room').textContent, 'プレイ中です');
   assert.equal($('room-audience-child').attributes['aria-pressed'], 'true');
   await $('room-audience-adult').click();
   assert.equal($('room-audience').value, 'adult');
   assert.equal($('room-audience-adult').attributes['aria-pressed'], 'true');
   await $('room-audience-child').click();
-  await $('create-room').click();
+  await $('room-group-8').click();
+  assert.equal($('room-group-8').attributes['aria-pressed'], 'true');
+  assert.equal($('room-group-1').attributes['aria-pressed'], 'false');
+  await $('enter-room').click();
+  assert.equal(requests[0].url, './api/groups/8/create');
   assert.equal(requests[0].input.cards[0].id, 'custom-child');
   assert.equal(requests[0].input.cards[0].money, 1234);
   assert.equal(requests[0].input.bonusCards.length, 4);
@@ -97,6 +116,26 @@ test('グループ画面：モード選択、参加、手番表示、連打防�
   assert.equal($('room-result').hidden, true);
   assert.equal($('event-ranking').hidden, false);
   assert.equal(next.readyState, 3);
+  await $('resume-room').click();
+  context.window.confirm = () => false;
+  const requestsBeforeCancel = requests.length;
+  await $('room-leave').click();
+  assert.equal(requests.length, requestsBeforeCancel);
+  assert.equal($('room-play').hidden, false);
+  assert.equal($('resume-room').hidden, false);
+  context.window.confirm = () => true;
+  leaveFails = true;
+  await $('room-leave').click();
+  assert.equal($('room-play').hidden, false);
+  assert.equal($('room-message').textContent, '退出できませんでした。');
+  assert.equal($('room-leave').disabled, false);
+  leaveFails = false;
+  await $('room-leave').click();
+  assert.equal(requests.at(-1).url, './api/rooms/001234/leave');
+  assert.equal($('room-play').hidden, true);
+  assert.equal($('room-entry').hidden, false);
+  assert.equal($('resume-room').hidden, true);
+  assert.equal(sockets.at(-1).readyState, 3);
 });
 
 test('全接続の結果表示：終了通知の受信・取りこぼし・スマートフォン復帰', async () => {
@@ -125,9 +164,10 @@ test('全接続の結果表示：終了通知の受信・取りこぼし・ス�
       location: { href: 'https://example.com/', protocol: 'https:' },
       localStorage: { getItem: () => null, setItem() {} },
       setTimeout: fn => { const id = ++timerId; timers.set(id, fn); return id; }, clearTimeout: id => timers.delete(id),
-      fetch: async () => ({ ok: true, json: async () => ({ token: 'token', room: serverState }) }) });
+      fetch: async url => ({ ok: true, json: async () => url === './api/groups' ? { groups: [{ group: 1, status: 'waiting', count: 1 }] } : { token: 'token', room: serverState } }) });
     vm.runInContext(fs.readFileSync('public/rooms.js', 'utf8'), context);
-    await $('create-room').click();
+    await $('group-mode').click();
+    await $('enter-room').click();
     assert.equal($('room-play').hidden, false);
     assert.equal($('room-result').hidden, true);
     clients.push({ $, socket, initial, timers, listeners, setState: value => { serverState = value; } });

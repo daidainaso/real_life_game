@@ -4,6 +4,46 @@
   let session, room, socket, active = false, pending = false, retry, timeout, syncTimer, syncing = false;
   try { session = JSON.parse(localStorage.getItem(key)); } catch {}
   $('resume-room').hidden = !session;
+  let selectedGroup = 1;
+  let groups = [], groupTimer, loadingGroups = false;
+  function renderGroups() {
+    const labels = { empty: '未作成', waiting: '参加受付中', playing: 'プレイ中', finished: '未作成', unknown: '確認できません' };
+    for (let group = 1; group <= 8; group++) {
+      const info = groups.find(item => item.group === group);
+      const button = $(`room-group-${group}`);
+      const title = document.createElement('strong');
+      title.textContent = `グループ ${group}`;
+      const status = document.createElement('span');
+      status.textContent = info ? `${info.status === 'waiting' && info.count >= 12 ? '満員' : labels[info.status]}${['waiting', 'playing'].includes(info.status) ? ` · ${info.count}/12人` : ''}` : '確認中…';
+      button.replaceChildren(title, status);
+      button.setAttribute('data-status', info?.status === 'finished' ? 'empty' : info?.status || 'unknown');
+      button.setAttribute('aria-pressed', String(group === selectedGroup));
+      button.disabled = pending;
+    }
+    const selected = groups.find(item => item.group === selectedGroup);
+    const canCreate = ['empty', 'finished'].includes(selected?.status);
+    const canJoin = selected?.status === 'waiting' && selected.count < 12;
+    $('enter-room').disabled = pending || !(canCreate || canJoin);
+    $('enter-room').textContent = pending ? '接続しています…' : canCreate ? 'このグループで始める' : canJoin ? 'このグループに参加する' : selected?.status === 'playing' ? 'プレイ中です' : selected?.status === 'waiting' ? '満員です' : 'グループの状態を確認中です';
+  }
+  async function refreshGroups() {
+    clearTimeout(groupTimer);
+    if ($('room-entry').hidden || loadingGroups) return;
+    loadingGroups = true;
+    try { groups = (await api('/groups')).groups; }
+    catch { groups = Array.from({ length: 8 }, (_, index) => ({ group: index + 1, status: 'unknown' })); }
+    finally {
+      loadingGroups = false;
+      renderGroups();
+      if (!$('room-entry').hidden) groupTimer = setTimeout(refreshGroups, 5000);
+    }
+  }
+  for (let group = 1; group <= 8; group++) {
+    $(`room-group-${group}`).addEventListener('click', () => {
+      selectedGroup = group;
+      renderGroups();
+    });
+  }
   function selectRoomAudience(value) {
     $('room-audience').value = value;
     for (const id of ['child', 'adult']) $(`room-audience-${id}`).setAttribute('aria-pressed', String(id === value));
@@ -41,7 +81,7 @@
     const connected = socket?.readyState === WebSocket.OPEN;
     const mine = room.status === 'playing' && room.turn === room.yourIndex;
     const goalReached = room.players[room.yourIndex].position >= room.goal;
-    $('room-heading').textContent = `部屋番号 ${room.code} · ${audiences[room.audience].label}`;
+    $('room-heading').textContent = `${room.group ? `グループ ${room.group}` : '参加中のグループ'} · ${audiences[room.audience].label}`;
     $('room-members').textContent = `参加者 ${room.players.length}人 / あなた：${room.players[room.yourIndex].name}`;
     $('room-status').textContent = room.status === 'finished' ? 'ゲーム終了です。最終ランキングを確認してください' : room.status === 'waiting' ? (room.host ? '参加者がそろったら開始してください。' : 'ホストが開始するまでお待ちください。') : mine ? (goalReached ? 'あなたの番です · ゴール後のボーナス' : 'あなたの番です') : `${room.players[room.turn].name}さんの番です`;
     $('room-status').classList.toggle('my-turn', mine);
@@ -76,11 +116,12 @@
     url.protocol = location.protocol === 'https:' ? 'wss:' : 'ws:';
     url.searchParams.set('token', session.token);
     const ws = socket = new WebSocket(url);
-    message('部屋に接続しています…'); render();
+    message('グループに接続しています…'); render();
     ws.onopen = () => { message(''); render(); };
     ws.onmessage = event => {
       if (socket !== ws || !active) return;
       const data = JSON.parse(event.data);
+      if (data.type === 'left') { exitRoom(); return; }
       clearTimeout(timeout); pending = false;
       if (data.type === 'error') message(data.error);
       if (data.type === 'state' || data.type === 'result') {
@@ -128,7 +169,7 @@
     if (document.visibilityState === 'visible') syncState();
   });
   async function api(route, input, authenticate = false) {
-    const response = await fetch(`./api/rooms${route}`, {
+    const response = await fetch(route === '/groups' || route.startsWith('/groups/') ? `./api${route}` : `./api/rooms${route}`, {
       method: input ? 'POST' : 'GET', headers: { 'Content-Type': 'application/json', ...(authenticate ? { Authorization: `Bearer ${session.token}` } : {}) },
       cache: 'no-store',
       body: input ? JSON.stringify(input) : undefined, signal: AbortSignal.timeout(10000),
@@ -146,23 +187,21 @@
   }
   async function enter(create) {
     if (pending) return;
-    pending = true; $('create-room').disabled = $('join-room').disabled = true;
+    pending = true; renderGroups();
     try {
-      const code = $('room-code').value.trim();
-      if (!create && !/^\d{6}$/.test(code)) throw new Error('6桁の部屋番号を入力してください。');
       const input = { name: $('player-name').value, audience: $('room-audience').value };
       if (create && typeof CardSettings !== 'undefined') {
         try { const settings = CardSettings.load(localStorage); input.cards = settings[input.audience]; input.bonusCards = settings.bonus[input.audience]; }
-        catch { throw new Error('カード設定を読み込めません。設定画面で保存をやり直してから部屋を作成してください。'); }
+        catch { throw new Error('カード設定を読み込めません。設定画面で保存をやり直してからグループを作成してください。'); }
       }
-      const data = await api(create ? '' : `/${code}/join`, input);
+      const data = await api(`/groups/${selectedGroup}/${create ? 'create' : 'join'}`, input);
       session = { code: data.room.code, token: data.token }; room = data.room;
       let saved = true;
       try { localStorage.setItem(key, JSON.stringify(session)); } catch { saved = false; }
       $('resume-room').hidden = false; open();
-      if (!saved) message('参加情報を保存できません。再読み込みすると部屋に戻れなくなります。');
+      if (!saved) message('参加情報を保存できません。再読み込みするとグループに戻れなくなります。');
     } catch (error) { message(error.message); }
-    finally { pending = false; $('create-room').disabled = $('join-room').disabled = false; render(); }
+    finally { pending = false; renderGroups(); render(); refreshGroups(); }
   }
   function action(type) {
     if (pending || socket?.readyState !== WebSocket.OPEN) return;
@@ -171,10 +210,12 @@
     // 応答不明の場合は再送せず、再接続で確定済み状態を取得します。
     timeout = setTimeout(connect, 10000);
   }
-  $('group-mode').addEventListener('click', () => {
+  $('group-mode').addEventListener('click', async () => {
     $('event-ranking').hidden = true;
     $('welcome').hidden = true; $('room-entry').hidden = false;
     selectRoomAudience($('audience').value);
+    renderGroups();
+    await refreshGroups();
   });
   $('room-back').addEventListener('click', () => { $('room-entry').hidden = true; $('welcome').hidden = false; $('event-ranking').hidden = false; });
   $('home').addEventListener('click', () => {
@@ -184,8 +225,11 @@
     $('welcome').hidden = false;
     document.body.classList.remove('room-open');
   });
-  $('create-room').addEventListener('click', () => enter(true));
-  $('join-room').addEventListener('click', () => enter(false));
+  $('enter-room').addEventListener('click', () => {
+    const selected = groups.find(item => item.group === selectedGroup);
+    if (['empty', 'finished'].includes(selected?.status)) return enter(true);
+    if (selected?.status === 'waiting' && selected.count < 12) return enter(false);
+  });
   $('room-start').addEventListener('click', () => action('start'));
   $('room-draw').addEventListener('click', () => action('draw'));
   $('room-finish').addEventListener('click', () => {
@@ -199,9 +243,23 @@
     catch (error) { message(error.message); }
     finally { pending = false; render(); }
   });
-  $('room-leave').addEventListener('click', () => {
+  function exitRoom() {
+    active = false; stop(); session = null; room = null;
+    try { localStorage.setItem(key, 'null'); } catch {}
+    $('resume-room').hidden = true;
     $('event-ranking').hidden = true;
-    active = false; stop(); $('room-play').hidden = $('room-result').hidden = true; $('room-entry').hidden = false;
+    $('room-play').hidden = $('room-result').hidden = true; $('room-entry').hidden = false;
     document.body.classList.remove('room-open');
+    renderGroups(); refreshGroups();
+  }
+  $('room-leave').addEventListener('click', async () => {
+    if (pending || !session) return;
+    if (!window.confirm('本当にグループを抜けますか？現在の参加情報は解除されます。')) return;
+    pending = true; $('room-leave').disabled = true; render();
+    try {
+      await api(`/${session.code}/leave`, {}, true);
+      exitRoom();
+    } catch (error) { message(error.message); }
+    finally { pending = false; $('room-leave').disabled = false; render(); }
   });
 })();

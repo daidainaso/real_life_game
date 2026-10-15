@@ -1,0 +1,23 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>グループ管理 | リアル人生ゲーム</title>
+  <link rel="stylesheet" href="./style.css">
+  <link rel="stylesheet" href="./card-settings.css">
+  <link rel="stylesheet" href="./admin.css?v=20261015-rooms">
+  <script defer src="./room-settings.js?v=20261015-group-wording"></script>
+</head>
+<body>
+  <main class="settings-app">
+    <header class="header"><a class="settings-brand" href="./admin.html">← 管理者サイトに戻る</a></header>
+    <p class="eyebrow">GROUP MANAGEMENT</p>
+    <h1>グループ管理</h1>
+    <p class="intro">参加受付中・プレイ中のグループを終了できます。終了すると現在の所持金で結果が確定し、同じグループで新しく始められます。</p>
+    <button id="reload-groups" class="text-button" type="button">最新の状態に更新する</button>
+    <p id="group-management-message" role="status" aria-live="polite"></p>
+    <div id="managed-groups" class="admin-menu" aria-label="グループ一覧"></div>
+  </main>
+</body>
+</html>

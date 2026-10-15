@@ -21,6 +21,13 @@ body {
 .audience-picker { border: 0; padding: 0; margin: 18px 0; min-width: 0; }
 .audience-picker legend { padding: 0; margin-bottom: 10px; font-size: 15px; font-weight: 700; }
 .audience-options { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+.group-options { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+.group-options button { display: grid; gap: 8px; min-height: 82px; padding: 14px 8px; border: 2px dashed #d6dfcf; border-radius: 12px; background: #fffdf8; color: #244b40; font-weight: 700; }
+.group-options button span { font-size: 11px; font-weight: 500; line-height: 1.5; }
+.group-options button[data-status="waiting"] { border-style: solid; border-color: #8baa90; background: #eaf3e7; }
+.group-options button[data-status="playing"] { border-style: solid; border-color: #d5b980; background: #fbf1dc; color: #795a22; }
+.group-options button[aria-pressed="true"] { background: #244b40; border-color: #244b40; color: #fffdf8; }
+.group-options button[aria-pressed="true"] strong::before { content: '✓ '; }
 .audience-option { display: grid; gap: 6px; min-height: 116px; padding: 14px 8px; border: 2px solid #d6dfcf; border-radius: 14px; background: #fffdf8; color: #223a35; text-align: center; }
 .audience-option strong { font-size: 20px; }
 .audience-option span { font-size: 12px; line-height: 1.5; }
