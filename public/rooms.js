@@ -20,17 +20,20 @@
       const showResult = finished && $('room-result').hidden;
       $('room-play').hidden = finished;
       $('room-result').hidden = !finished;
+      $('event-ranking').hidden = !finished;
       if (finished) {
         const player = room.players[room.yourIndex];
         $('room-result-money').textContent = LifeGame.amount(player.money);
         $('room-result-name').textContent = player.name;
-        $('room-result-scores').replaceChildren(...room.players.map((p, index) => {
+        const sorted = room.players.map((p, index) => ({ ...p, index })).sort((a, b) => b.money - a.money);
+        $('room-result-scores').replaceChildren(...sorted.map(p => {
           const li = document.createElement('li');
-          li.textContent = `${index === room.yourIndex ? 'あなた · ' : ''}${p.name}：${LifeGame.amount(p.money)}`;
+          li.textContent = `${sorted.findIndex(other => other.money === p.money) + 1}位 · ${p.index === room.yourIndex ? 'あなた · ' : ''}${p.name}：${LifeGame.amount(p.money)}`;
           return li;
         }));
         if (showResult) {
-          $('announcement').textContent = '全員ゴールしました。ゲーム終了です。最終所持金を確認してください。';
+          $('announcement').textContent = 'ゲーム終了です。最終ランキングを確認してください。';
+          document.dispatchEvent?.(new CustomEvent('room-result', { detail: { code: session.code, token: session.token } }));
           $('room-again').focus();
         }
       }
@@ -40,9 +43,11 @@
     const goalReached = room.players[room.yourIndex].position >= room.goal;
     $('room-heading').textContent = `部屋番号 ${room.code} · ${audiences[room.audience].label}`;
     $('room-members').textContent = `参加者 ${room.players.length}人 / あなた：${room.players[room.yourIndex].name}`;
-    $('room-status').textContent = room.status === 'finished' ? '全員ゴール！ ゲーム終了です' : room.status === 'waiting' ? (room.host ? '参加者がそろったら開始してください。' : 'ホストが開始するまでお待ちください。') : mine ? (goalReached ? 'あなたの番です · ゴール後のボーナス' : 'あなたの番です') : `${room.players[room.turn].name}さんの番です`;
+    $('room-status').textContent = room.status === 'finished' ? 'ゲーム終了です。最終ランキングを確認してください' : room.status === 'waiting' ? (room.host ? '参加者がそろったら開始してください。' : 'ホストが開始するまでお待ちください。') : mine ? (goalReached ? 'あなたの番です · ゴール後のボーナス' : 'あなたの番です') : `${room.players[room.turn].name}さんの番です`;
     $('room-status').classList.toggle('my-turn', mine);
     $('room-start').hidden = !room.host || room.status !== 'waiting';
+    $('room-finish').hidden = !room.host || room.status !== 'playing';
+    $('room-finish').disabled = !connected || pending;
     $('room-start').disabled = !connected || pending || room.players.length < 2;
     $('room-draw').hidden = room.status !== 'playing';
     $('room-draw').disabled = !connected || pending || !mine;
@@ -134,6 +139,7 @@
   }
   function open() {
     active = true;
+    $('event-ranking').hidden = true;
     for (const id of ['welcome', 'play', 'result', 'room-entry', 'room-result']) $(id).hidden = true;
     $('room-play').hidden = false; document.body.classList.add('room-open');
     connect();
@@ -172,6 +178,7 @@
   $('room-back').addEventListener('click', () => { $('room-entry').hidden = true; $('welcome').hidden = false; });
   $('home').addEventListener('click', () => {
     active = false; stop();
+    $('event-ranking').hidden = true;
     $('room-play').hidden = $('room-entry').hidden = $('room-result').hidden = true;
     $('welcome').hidden = false;
     document.body.classList.remove('room-open');
@@ -180,6 +187,9 @@
   $('join-room').addEventListener('click', () => enter(false));
   $('room-start').addEventListener('click', () => action('start'));
   $('room-draw').addEventListener('click', () => action('draw'));
+  $('room-finish').addEventListener('click', () => {
+    if (window.confirm('グループ全員のゲームを終了して、現在の所持金で結果を確定しますか？')) action('finish');
+  });
   $('room-again').addEventListener('click', () => $('home').click());
   $('resume-room').addEventListener('click', async () => {
     if (pending || !session) return;
@@ -189,6 +199,7 @@
     finally { pending = false; render(); }
   });
   $('room-leave').addEventListener('click', () => {
+    $('event-ranking').hidden = true;
     active = false; stop(); $('room-play').hidden = $('room-result').hidden = true; $('room-entry').hidden = false;
     document.body.classList.remove('room-open');
   });

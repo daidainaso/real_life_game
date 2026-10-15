@@ -41,6 +41,7 @@ test('グループ画面：モード選択、参加、手番表示、連打防�
   vm.runInContext(fs.readFileSync('public/script.js', 'utf8'), context);
   vm.runInContext(fs.readFileSync('public/rooms.js', 'utf8'), context);
   await $('start').click(); assert.equal($('play').hidden, false);
+  assert.equal($('event-ranking').hidden, true);
   await $('home').click(); assert.equal($('welcome').hidden, false); assert.equal($('play').hidden, true);
   $('group-mode').click(); assert.equal($('welcome').hidden, true); assert.equal($('room-entry').hidden, false);
   assert.equal($('room-audience-child').attributes['aria-pressed'], 'true');
@@ -58,6 +59,7 @@ test('グループ画面：モード選択、参加、手番表示、連打防�
   ws.open(); ws.update(state); assert.equal($('room-start').disabled, false);
   $('room-start').click(); $('room-start').click(); assert.equal(ws.sent.length, 1);
   state = { ...state, status: 'playing', revision: 2 }; ws.update(state);
+  assert.equal($('event-ranking').hidden, true);
   assert.equal($('room-status').textContent, 'あなたの番です'); assert.equal($('room-draw').disabled, false);
   $('room-draw').click(); $('room-draw').click(); assert.equal(ws.sent.length, 2);
   state = { ...state, revision: 3, turn: 1, last: { name: 'ホスト', card: { title: '旅行', money: -1000, move: -2 } } };
@@ -74,17 +76,26 @@ test('グループ画面：モード選択、参加、手番表示、連打防�
   next.update({ ...state, turn: 0, players: [{ ...state.players[0], position: 50 }, state.players[1]] });
   assert.match($('room-draw').textContent, /ボーナスカード/);
   assert.match($('room-scores').children[0].textContent, /ゴール済み/);
+  assert.equal($('room-finish').hidden, false);
+  context.window = { confirm: () => false };
+  await $('room-finish').click();
+  assert.equal(next.sent.length, 0);
+  context.window.confirm = () => true;
+  await $('room-finish').click();
+  assert.equal(next.sent[0].type, 'finish');
   next.update({ ...state, status: 'finished', players: state.players.map(p => ({ ...p, position: 50 })) });
   assert.match($('room-status').textContent, /ゲーム終了/);
   assert.equal($('room-draw').hidden, true);
   assert.equal($('room-again').hidden, false);
   assert.equal($('room-play').hidden, true);
   assert.equal($('room-result').hidden, false);
+  assert.equal($('event-ranking').hidden, false);
   assert.equal($('room-result-money').textContent, '100,000円');
   assert.equal($('room-result-scores').children.length, 2);
   await $('room-again').click(); assert.equal($('room-play').hidden, true); assert.equal($('room-entry').hidden, true);
   assert.equal($('welcome').hidden, false);
   assert.equal($('room-result').hidden, true);
+  assert.equal($('event-ranking').hidden, true);
   assert.equal(next.readyState, 3);
 });
 

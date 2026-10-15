@@ -30,7 +30,7 @@ body {
 .field input, .field select { width: 100%; min-height: 44px; padding: 10px; font: inherit; border: 1px solid #d6dfcf; border-radius: 10px; background: #fffdf8; color: #223a35; }
 .room-panel { margin-top: 24px; padding-top: 16px; border-top: 1px solid #dedbcf; }
 .room-panel h2 { font-size: 20px; }
-.room-scores { padding-left: 20px; font-size: 15px; line-height: 1.9; overflow-wrap: anywhere; }
+.room-scores { list-style: none; padding-left: 0; font-size: 15px; line-height: 1.9; overflow-wrap: anywhere; }
 #room-status { font-size: 25px; font-weight: 700; line-height: 1.4; overflow-wrap: anywhere; }
 #room-status.my-turn { color: #26734d; }
 .room-scores .current-player { font-weight: 700; color: #26734d; }
@@ -503,6 +503,11 @@ dialog p {
         font-size: 19px
     }
 }
+
+#event-ranking { margin-top: 24px; text-align: left; }
+#event-ranking summary { cursor: pointer; padding: 12px 0; font-weight: bold; }
+#ranking-child, #ranking-adult { list-style: none; padding-left: 0; max-height: 320px; overflow-y: auto; }
+body.viewport-fit:has(#event-ranking[open]) .app { transform: none; }
 
 /* ブラウザの操作バーを除いた高さに合わせ、操作ボタンまで収めます。 */
 @media (max-height: 800px) {

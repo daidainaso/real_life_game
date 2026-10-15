@@ -5,15 +5,16 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#f6f3eb">
   <title>リアル人生ゲーム</title>
-  <link rel="stylesheet" href="./style.css?v=20261011-audience1">
+  <link rel="stylesheet" href="./style.css?v=20261015-ranking-list">
   <script defer src="./cards.js"></script>
   <script defer src="./card-settings-store.js?v=20261014-bonus"></script>
-  <script defer src="./script.js?v=20261011-audience1"></script>
-  <script defer src="./rooms.js?v=20261014-bonus"></script>
+  <script defer src="./script.js?v=20261015-result-ranking"></script>
+  <script defer src="./rooms.js?v=20261015-result-ranking"></script>
+  <script defer src="./rankings.js?v=20261015-settings"></script>
 </head>
 <body>
   <main class="app">
-    <header class="header"><span class="brand-mark" aria-hidden="true">↗</span><button id="home" class="brand-home" type="button" aria-label="リアル人生ゲーム：最初の画面に戻る">リアル人生ゲーム</button><span class="badge">○○学祭</span></header>
+    <header class="header"><span class="brand-mark" aria-hidden="true">↗</span><button id="home" class="brand-home" type="button" aria-label="リアル人生ゲーム：最初の画面に戻る">リアル人生ゲーム</button></header>
     <p id="notice" class="notice" role="status" hidden></p>
     <section id="welcome" class="screen">
       <p class="eyebrow">YOUR NEXT CHAPTER</p>
@@ -45,6 +46,7 @@
       <p class="eyebrow">GOAL / お疲れさまでした</p><span class="result-icon" aria-hidden="true">⚑</span><h1>あなたの人生、<br>ここでひと区切り。</h1><p id="result-message" class="intro">ゴールです。結果をスタッフに見せてください。</p>
       <div class="wallet"><span>最終所持金</span><strong id="result-money"></strong><span id="result-count" class="wallet-note"></span></div>
       <button id="again" class="primary" type="button">最初から遊ぶ <span aria-hidden="true">→</span></button>
+      <form id="solo-ranking-form"><label class="field">ランキングの表示名<input id="solo-ranking-name" required maxlength="24"></label><button class="primary" type="submit">結果をランキングに登録する</button><p id="solo-ranking-notice" role="status"></p></form>
     </section>
     <section id="room-entry" class="room-panel" hidden>
       <h2>グループで遊ぶ</h2>
@@ -72,6 +74,7 @@
       <button id="room-start" class="primary" type="button">全員そろったので開始する</button>
       <article class="event-card"><span id="room-icon" class="card-icon"></span><h2 id="room-card"></h2><p id="room-money" class="card-money"></p><div id="room-move" class="move"></div></article>
       <button id="room-draw" class="primary" type="button" hidden>カードを引く</button>
+      <button id="room-finish" class="text-button" type="button" hidden>グループ全員のゲームを終了して結果を見る</button>
       <ul id="room-scores" class="room-scores"></ul>
       <p id="room-message" class="notice" role="status" hidden></p>
       <button id="room-leave" class="text-button" type="button">部屋の画面を閉じる</button>
@@ -81,13 +84,21 @@
       <p class="eyebrow">GOAL / お疲れさまでした</p>
       <span class="result-icon" aria-hidden="true">⚑</span>
       <h1>みんなの人生、<br>ここでひと区切り。</h1>
-      <p class="intro">全員ゴールしました。結果をスタッフに見せてください。</p>
+      <p class="intro">ゲームが終了しました。結果をスタッフに見せてください。</p>
       <div class="wallet"><span>あなたの最終所持金</span><strong id="room-result-money"></strong><span id="room-result-name" class="wallet-note"></span></div>
-      <h2>みんなの最終所持金</h2>
+      <h2>グループの最終ランキング</h2>
       <ul id="room-result-scores" class="room-scores"></ul>
       <p id="room-result-notice" class="notice" role="status" hidden></p>
       <button id="room-again" class="primary" type="button">最初から遊ぶ <span aria-hidden="true">→</span></button>
     </section>
+    <details id="event-ranking" open hidden>
+      <summary>みんなのランキング</summary>
+      <p class="hint">登録した全員の結果です。子供・大人別に所持金順で表示します。同額は同順位です。表示名は全員に公開されます。</p>
+      <button id="ranking-refresh" class="text-button" type="button">最新のランキングに更新する</button>
+      <p id="ranking-notice" role="status"></p>
+      <h3>子供</h3><ol id="ranking-child" class="room-scores"></ol>
+      <h3>大人</h3><ol id="ranking-adult" class="room-scores"></ol>
+    </details>
     <p id="announcement" class="sr-only" role="status" aria-live="polite" aria-atomic="true"></p>
     <noscript><p class="notice">遊ぶにはブラウザのJavaScriptを有効にしてください。</p></noscript>
   </main>

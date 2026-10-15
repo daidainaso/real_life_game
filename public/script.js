@@ -128,6 +128,7 @@ function initializeGame() {
     try { localStorage.setItem(LifeGame.key, JSON.stringify({ ...state, audience: gameConfig.eras[0].id, settingsSnapshot: { config: gameConfig, cards } })); } catch { storageFailure(); }
   }
   function screen(name) {
+    $("event-ranking").hidden = name !== "result";
     for (const id of ["welcome", "play", "result"]) $(id).hidden = id !== name;
     $("room-entry").hidden = true;
     $("room-result").hidden = true;
@@ -161,6 +162,7 @@ function initializeGame() {
   }
   function showResult() {
     screen("result");
+    document.dispatchEvent?.(new CustomEvent('game-result'));
     $("result-message").textContent = state.position === gameConfig.goal ? `${gameConfig.goal}マス目まで進んでゴールです。結果をスタッフに見せてください。` : "ゲームを終了しました。結果をスタッフに見せてください。";
     $("result-money").textContent = LifeGame.amount(state.money);
     $("result-count").textContent = `${state.drawCount}枚のカードで、人生を歩みました。`;

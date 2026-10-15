@@ -34,6 +34,34 @@ export default {
       const url = new URL(request.url);
       if (!url.pathname.startsWith('/api/')) return env.ASSETS.fetch(request);
       if (request.headers.get('Origin') && request.headers.get('Origin') !== url.origin) fail('この接続元からは操作できません。', 403);
+      if (url.pathname === '/api/rankings' || url.pathname === '/api/rankings/paper') {
+        const stub = env.ROOMS.get(env.ROOMS.idFromName('event-rankings'));
+        if (request.method === 'GET' && url.pathname === '/api/rankings') return stub.fetch(request);
+        if (request.method !== 'POST') fail('対応していない操作です。', 405);
+        const input = await body(request, 32768);
+        const paper = url.pathname.endsWith('/paper');
+        const items = paper && Array.isArray(input.entries) ? input.entries : [input];
+        if (!items.length || items.length > 100) fail('1〜100人分の結果を入力してください。');
+        const entries = items.map(item => {
+          if (!item || !['child', 'adult'].includes(item.audience) || !Number.isSafeInteger(item.money)) fail('区分と所持金を確認してください。');
+          if (typeof item.id !== 'string' || !/^[a-zA-Z0-9-]{1,100}$/.test(item.id)) fail('登録情報を確認してください。');
+          const source = paper ? (item.source ?? 'ひとり') : 'ひとり';
+          if (!['グループ', 'ひとり'].includes(source)) fail('参加形式を選択してください。');
+          return { id: `${paper ? 'paper' : 'solo'}-${item.id}`, name: validName(item.name), money: item.money, audience: item.audience, source };
+        });
+        return stub.fetch(new Request('https://internal/rankings', { method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ entries }) }));
+      }
+      const rankingRoom = url.pathname.match(/^\/api\/rooms\/(\d{6})\/ranking$/);
+      if (rankingRoom && request.method === 'POST') {
+        const response = await env.ROOMS.get(env.ROOMS.idFromName(rankingRoom[1])).fetch(new Request(`${url.origin}/api/rooms/${rankingRoom[1]}`, { headers: request.headers }));
+        if (!response.ok) return response;
+        const { room } = await response.json();
+        if (room.status !== 'finished') fail('終了後に登録してください。', 409);
+        return env.ROOMS.get(env.ROOMS.idFromName('event-rankings')).fetch(new Request('https://internal/rankings', {
+          method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ entries: room.players.map(p => ({ id: p.id, name: p.name, money: p.money, audience: room.audience, source: 'グループ' })) }),
+        }));
+      }
       if (url.pathname === '/api/rooms' && request.method === 'POST') {
         const input = await body(request, 131072);
         validName(input.name); roomSettings(input);
@@ -91,6 +119,15 @@ export class GameRoom {
     return this.ctx.blockConcurrencyWhile(async () => {
       try {
         const url = new URL(request.url), action = url.pathname.split('/').at(-1);
+        if (url.pathname === '/api/rankings' || url.pathname === '/rankings') {
+          const entries = await this.ctx.storage.get('rankings') || [];
+          if (request.method === 'POST') {
+            const input = await body(request, 32768);
+            for (const entry of input.entries) if (!entries.some(e => e.id === entry.id)) entries.push(entry);
+            await this.ctx.storage.put('rankings', entries);
+          }
+          return json({ entries: entries.sort((a, b) => b.money - a.money) });
+        }
         if (action === 'create' && request.method === 'POST') {
           if (this.room) fail('この番号は使用中です。', 409);
           const input = await body(request, 131072), settings = roomSettings(input);
@@ -136,6 +173,10 @@ export class GameRoom {
           if (r.started || r.players.length < 2) fail('2人以上そろってから開始してください。', 409);
           r.started = true; r.deck = game.shuffle(r.cards); r.deckIndex = 0;
           r.bonusDeck = game.shuffle(r.bonusCards); r.bonusDeckIndex = 0;
+        } else if (message.type === 'finish') {
+          if (r.players[0] !== player) fail('ホストだけが終了できます。', 403);
+          if (!r.started || r.finished) fail('進行中のゲームだけ終了できます。', 409);
+          r.finished = true;
         } else if (message.type === 'draw') {
           if (r.finished) fail('ゲームは終了しています。', 409);
           if (!r.started || r.players[r.turn] !== player) fail('現在はあなたの番ではありません。', 403);

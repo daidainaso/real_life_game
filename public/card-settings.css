@@ -1,5 +1,8 @@
 .settings-app { max-width: 960px; margin: auto; padding: 28px 24px 48px; }
-.settings-header { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 40px; }
+.settings-header { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 40px; }
+.settings-brand { display: inline-flex; align-items: center; gap: 10px; color: inherit; text-decoration: none; }
+.settings-brand:focus-visible { outline: 3px solid #cd8433; outline-offset: 4px; border-radius: 4px; }
+.settings-brand .brand-mark { flex-shrink: 0; }
 .settings-app h1 { font-size: 36px; margin-bottom: 16px; }
 .settings-app h2 { font-size: 18px; }
 .settings-app .intro { font-size: 16px; }
@@ -27,4 +30,11 @@
 .settings-tool-buttons { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; }
 .settings-tools .text-button { width: auto; }
 .settings-app input:focus-visible { outline: 3px solid #cd8433; outline-offset: 2px; }
+.ranking-settings-table { min-width: 660px; }
+.ranking-settings-table th:nth-child(1) { width: auto; }
+.ranking-settings-table th:nth-child(2) { width: 190px; }
+.ranking-settings-table th:nth-child(3) { width: 140px; }
+.ranking-settings-table th:nth-child(4) { width: 70px; }
+.ranking-settings-table select { width: 100%; min-height: 44px; padding: 10px; font: inherit; border: 1px solid #d6dfcf; border-radius: 8px; background: #fffdf8; color: #223a35; }
+#add-result-bottom { display: block; margin-left: auto; }
 @media (max-width: 680px) { .settings-app { padding: 20px 16px 32px; } .settings-header .badge { font-size: 10px; } .settings-save .primary { min-width: 145px; } }

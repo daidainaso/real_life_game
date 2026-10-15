@@ -1,0 +1,8 @@
+.admin-menu { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 20px; margin-top: 32px; }
+.admin-menu-item { display: flex; flex-direction: column; gap: 16px; padding: 28px; border: 1px solid #bdc9bb; border-radius: 16px; background: #fffdf8; color: #223a35; text-decoration: none; }
+.admin-menu-item h2 { margin: 0; font-size: 23px; }
+.admin-menu-item p { margin: 0; line-height: 1.8; }
+.admin-menu-item span { margin-top: auto; padding-top: 12px; color: #244b40; font-weight: 700; }
+.admin-menu-item:hover { border-color: #244b40; background: #e9ede3; }
+.admin-menu-item:focus-visible { outline: 3px solid #cd8433; outline-offset: 4px; }
+@media (max-width: 680px) { .admin-menu { grid-template-columns: 1fr; } }
