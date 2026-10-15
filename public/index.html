@@ -5,12 +5,12 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#f6f3eb">
   <title>リアル人生ゲーム</title>
-  <link rel="stylesheet" href="./style.css?v=20261015-ranking-list">
+  <link rel="stylesheet" href="./style.css?v=20261015-ranking-inline-source">
   <script defer src="./cards.js"></script>
   <script defer src="./card-settings-store.js?v=20261014-bonus"></script>
-  <script defer src="./script.js?v=20261015-result-ranking"></script>
-  <script defer src="./rooms.js?v=20261015-result-ranking"></script>
-  <script defer src="./rankings.js?v=20261015-settings"></script>
+  <script defer src="./script.js?v=20261015-home-ranking"></script>
+  <script defer src="./rooms.js?v=20261015-home-ranking"></script>
+  <script defer src="./rankings.js?v=20261015-ranking-cards"></script>
 </head>
 <body>
   <main class="app">
@@ -96,8 +96,10 @@
       <p class="hint">登録した全員の結果です。子供・大人別に所持金順で表示します。同額は同順位です。表示名は全員に公開されます。</p>
       <button id="ranking-refresh" class="text-button" type="button">最新のランキングに更新する</button>
       <p id="ranking-notice" role="status"></p>
-      <h3>子供</h3><ol id="ranking-child" class="room-scores"></ol>
-      <h3>大人</h3><ol id="ranking-adult" class="room-scores"></ol>
+      <h3 class="ranking-heading">子供 <span id="ranking-child-count" class="ranking-count"></span></h3>
+      <ol id="ranking-child" class="room-scores" aria-label="子供のランキング"></ol>
+      <h3 class="ranking-heading">大人 <span id="ranking-adult-count" class="ranking-count"></span></h3>
+      <ol id="ranking-adult" class="room-scores" aria-label="大人のランキング"></ol>
     </details>
     <p id="announcement" class="sr-only" role="status" aria-live="polite" aria-atomic="true"></p>
     <noscript><p class="notice">遊ぶにはブラウザのJavaScriptを有効にしてください。</p></noscript>

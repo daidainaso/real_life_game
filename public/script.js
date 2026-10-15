@@ -128,7 +128,7 @@ function initializeGame() {
     try { localStorage.setItem(LifeGame.key, JSON.stringify({ ...state, audience: gameConfig.eras[0].id, settingsSnapshot: { config: gameConfig, cards } })); } catch { storageFailure(); }
   }
   function screen(name) {
-    $("event-ranking").hidden = name !== "result";
+    $("event-ranking").hidden = name !== "result" && name !== "welcome";
     for (const id of ["welcome", "play", "result"]) $(id).hidden = id !== name;
     $("room-entry").hidden = true;
     $("room-result").hidden = true;

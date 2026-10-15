@@ -95,7 +95,7 @@ test('グループ画面：モード選択、参加、手番表示、連打防�
   await $('room-again').click(); assert.equal($('room-play').hidden, true); assert.equal($('room-entry').hidden, true);
   assert.equal($('welcome').hidden, false);
   assert.equal($('room-result').hidden, true);
-  assert.equal($('event-ranking').hidden, true);
+  assert.equal($('event-ranking').hidden, false);
   assert.equal(next.readyState, 3);
 });
 

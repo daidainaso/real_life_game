@@ -172,13 +172,14 @@
     timeout = setTimeout(connect, 10000);
   }
   $('group-mode').addEventListener('click', () => {
+    $('event-ranking').hidden = true;
     $('welcome').hidden = true; $('room-entry').hidden = false;
     selectRoomAudience($('audience').value);
   });
-  $('room-back').addEventListener('click', () => { $('room-entry').hidden = true; $('welcome').hidden = false; });
+  $('room-back').addEventListener('click', () => { $('room-entry').hidden = true; $('welcome').hidden = false; $('event-ranking').hidden = false; });
   $('home').addEventListener('click', () => {
     active = false; stop();
-    $('event-ranking').hidden = true;
+    $('event-ranking').hidden = false;
     $('room-play').hidden = $('room-entry').hidden = $('room-result').hidden = true;
     $('welcome').hidden = false;
     document.body.classList.remove('room-open');

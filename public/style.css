@@ -505,8 +505,26 @@ dialog p {
 }
 
 #event-ranking { margin-top: 24px; text-align: left; }
-#event-ranking summary { cursor: pointer; padding: 12px 0; font-weight: bold; }
-#ranking-child, #ranking-adult { list-style: none; padding-left: 0; max-height: 320px; overflow-y: auto; }
+#event-ranking summary { cursor: pointer; padding: 16px 0; font-weight: bold; font-size: 20px; color: #244b40; border-bottom: 1px solid #dedbcf; }
+.ranking-heading { display: flex; align-items: center; gap: 10px; margin: 24px 0 12px; font-size: 16px; }
+.ranking-count { padding: 3px 9px; border-radius: 20px; background: #e6ebdf; color: #52665b; font-size: 11px; font-weight: 500; }
+#ranking-child, #ranking-adult { display: grid; gap: 10px; list-style: none; padding: 2px 4px 6px; margin: 0 -4px; max-height: 360px; overflow-y: auto; }
+.ranking-card { display: grid; grid-template-columns: 42px minmax(0, 1fr) auto; gap: 12px; align-items: center; padding: 15px 12px; border: 1px solid #e3e4da; border-radius: 14px; background: #fffdf8; box-shadow: 0 3px 8px #223a3506; line-height: 1.4; }
+.ranking-position { display: grid; place-items: center; min-height: 38px; border-radius: 12px; background: #f0f1ea; color: #637268; font-size: 13px; font-weight: 700; font-variant-numeric: tabular-nums; }
+.ranking-place-1 { border-color: #d8bd7c; background: linear-gradient(115deg, #fff7df, #fffdf8 75%); }
+.ranking-place-1 .ranking-position { background: #f1dfaa; color: #705016; }
+.ranking-place-2 .ranking-position { background: #e5e9ec; color: #52616b; }
+.ranking-place-3 .ranking-position { background: #efdfd0; color: #81593b; }
+.ranking-identity { display: flex; align-items: center; gap: 6px; min-width: 0; }
+.ranking-name { min-width: 0; overflow-wrap: anywhere; font-size: 14px; }
+.ranking-source { flex-shrink: 0; padding: 2px 7px; border-radius: 5px; background: #eef1e9; color: #5b6c60; font-size: 10px; white-space: nowrap; }
+.ranking-money { color: #244b40; font-size: 16px; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.ranking-empty { padding: 24px 16px; border: 1px dashed #ced5c8; border-radius: 14px; text-align: center; color: #637268; font-size: 13px; line-height: 1.8; }
+@media (max-width: 380px) {
+    .ranking-card { grid-template-columns: 36px minmax(0, 1fr); gap: 8px 10px; padding: 12px; }
+    .ranking-position { grid-row: span 2; }
+    .ranking-money { grid-column: 2; font-size: 16px; white-space: normal; overflow-wrap: anywhere; }
+}
 body.viewport-fit:has(#event-ranking[open]) .app { transform: none; }
 
 /* ブラウザの操作バーを除いた高さに合わせ、操作ボタンまで収めます。 */

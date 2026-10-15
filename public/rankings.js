@@ -15,11 +15,35 @@
   function render(entries) {
     for (const audience of ['child', 'adult']) {
       const list = entries.filter(p => p.audience === audience).sort((a, b) => b.money - a.money);
+      $(`ranking-${audience}-count`).textContent = `${list.length}人`;
       $(`ranking-${audience}`).replaceChildren(...list.map(p => {
         const li = document.createElement('li');
-        li.textContent = `${list.findIndex(other => other.money === p.money) + 1}位 · ${p.name}：${LifeGame.amount(p.money)}（${p.source}）`;
+        const rank = list.findIndex(other => other.money === p.money) + 1;
+        li.className = `ranking-card${rank <= 3 ? ` ranking-place-${rank}` : ''}`;
+        const position = document.createElement('span');
+        position.className = 'ranking-position';
+        position.textContent = `${rank}位`;
+        const identity = document.createElement('div');
+        identity.className = 'ranking-identity';
+        const name = document.createElement('strong');
+        name.className = 'ranking-name';
+        name.textContent = p.name;
+        const source = document.createElement('span');
+        source.className = 'ranking-source';
+        source.textContent = p.source;
+        identity.append(name, source);
+        const money = document.createElement('strong');
+        money.className = 'ranking-money';
+        money.textContent = LifeGame.amount(p.money);
+        li.append(position, identity, money);
         return li;
       }));
+      if (!list.length) {
+        const empty = document.createElement('li');
+        empty.className = 'ranking-empty';
+        empty.textContent = 'まだ記録がありません。最初の参加をお待ちしています。';
+        $(`ranking-${audience}`).append(empty);
+      }
     }
     $('ranking-notice').textContent = entries.length ? '' : 'まだ登録された結果はありません。';
   }

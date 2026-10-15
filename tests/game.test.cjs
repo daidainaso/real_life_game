@@ -175,11 +175,14 @@ test("開始・連打防止・再開・確認キャンセル・終了を画面�
 
 test("タイトルからモード選択に戻り、1人用の記録を維持して再開できる", () => {
   const app = loadApp();
+  assert.equal(app.el("event-ranking").hidden, false);
   app.el("start").click();
+  assert.equal(app.el("event-ranking").hidden, true);
   app.el("draw").click();
   const saved = app.record();
   app.el("home").click();
   assert.equal(app.el("welcome").hidden, false);
+  assert.equal(app.el("event-ranking").hidden, false);
   assert.equal(app.el("play").hidden, true);
   assert.equal(app.el("room-play").hidden, true);
   assert.equal(app.el("start").hidden, false);
