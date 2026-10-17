@@ -21,6 +21,20 @@ test('共通ランキング：公開閲覧、暗証番号なしの紙登録、�
   await api('rankings', { id: 'solo-test', name: '個人', money: 120000, audience: 'adult' });
   let entries = (await api('rankings')).entries;
   assert.equal(entries.length, 2); assert.equal(entries[0].money, 120000);
+  const update = { id: 'paper-paper-test', name: '変更した名前', money: 150000 };
+  for (const invalid of [{ ...update, name: ' ' }, { ...update, money: 1.5 }, { ...update, id: '' }]) {
+    assert.equal((await api('admin/rankings/update', invalid)).status, 400);
+  }
+  assert.equal((await api('admin/rankings/update', { ...update, id: 'missing' })).status, 404);
+  const updated = await api('admin/rankings/update', update);
+  assert.equal(updated.status, 200);
+  assert.equal(updated.entries[0].name, update.name);
+  assert.equal(updated.entries[0].money, update.money);
+  assert.equal(updated.entries[0].audience, 'child');
+  await api('rankings/paper', paper);
+  entries = (await api('rankings')).entries;
+  assert.equal(entries[0].name, update.name);
+  assert.equal(entries[0].money, update.money);
   await mf.unsafeEvictDurableObject('ranking-test', 'GameRoom', { name: 'event-rankings' });
   assert.deepEqual((await api('rankings')).entries, entries);
   assert.equal((await api('admin/rankings/delete', { id: '' })).status, 400);

@@ -4,30 +4,50 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>ランキング設定 | リアル人生ゲーム</title>
-  <link rel="stylesheet" href="./style.css?v=20261015-ranking-list">
-  <link rel="stylesheet" href="./card-settings.css?v=20261015-single">
-  <script defer src="./ranking-settings.js?v=20261015-delete"></script>
+  <link rel="stylesheet" href="./style.css?v=20261017-ranking-cards">
+  <link rel="stylesheet" href="./card-settings.css?v=20261017-ranking-cards">
+  <script defer src="./ranking-settings.js?v=20261017-ranking-cards"></script>
 </head>
 <body>
   <main class="settings-app">
     <header class="header settings-header"><a class="settings-brand" href="./admin.html" aria-label="リアル人生ゲーム：管理者トップに戻る"><span class="brand-mark" aria-hidden="true">↗</span><span>リアル人生ゲーム · 管理者用</span></a><a class="settings-small-button" href="./admin.html">管理者トップに戻る</a></header>
     <p class="eyebrow">RANKING SETTINGS</p>
     <h1>ランキング設定</h1>
-    <p class="intro">参加者の結果を追加・削除できます。<br>追加する場合は表示名と最終所持金を入力し、参加形式を「グループ」「ひとり」から選んでください。</p>
-    <p class="hint">入力後は「結果を保存」を押してください。1人分ずつ保存し、全員のランキングに反映します。表示名は全員に公開されます。</p>
+    <p class="intro">参加者の結果を追加・編集・削除できます。<br>保存済みの記録の「編集」から、表示名と最終所持金を変更できます。</p>
+    <p class="hint">「＋ 結果を追加」から登録画面を開き、1人分ずつ保存できます。保存した結果は全員のランキングに反映されます。</p>
+    <div class="settings-toolbar"><fieldset class="audience-picker"><legend>表示・追加する区分</legend><div class="audience-options"><button type="button" data-audience="child" class="audience-option" aria-pressed="true"><strong>子供</strong><span>子供のランキング</span></button><button type="button" data-audience="adult" class="audience-option" aria-pressed="false"><strong>大人</strong><span>大人のランキング</span></button></div></fieldset><button id="add-result" type="button" class="settings-small-button">＋ 結果を追加</button></div>
+    <p id="ranking-settings-message" class="notice" role="status" hidden></p>
+    <dialog id="ranking-add" aria-labelledby="result-heading">
     <form id="ranking-settings-form">
-      <div class="settings-toolbar"><fieldset class="audience-picker"><legend>結果を追加する区分</legend><div class="audience-options"><button type="button" data-audience="child" class="audience-option" aria-pressed="true"><strong>子供</strong><span>子供のランキング</span></button><button type="button" data-audience="adult" class="audience-option" aria-pressed="false"><strong>大人</strong><span>大人のランキング</span></button></div></fieldset></div>
       <div class="settings-editor">
-        <h2>参加者の結果を1件ずつ登録</h2>
+        <h2 id="result-heading">参加者の結果を1件ずつ登録</h2>
         <p class="hint">所持金は円単位の整数で入力してください。例：100000、借金は-500です。</p>
         <label>参加者の表示名<input id="result-name" required maxlength="24" autocomplete="off"></label>
         <label>最終所持金（円）<input id="result-money" type="number" required step="1"></label>
         <label>参加形式<select id="result-source"><option>ひとり</option><option>グループ</option></select></label>
       </div>
-      <p id="ranking-settings-message" class="notice" role="status" hidden></p>
-      <div class="settings-save"><span id="ranking-save-status" aria-live="polite">未保存の結果はありません</span><button id="save-results" type="submit" class="primary">結果を保存</button></div>
+      <p id="ranking-add-error" class="notice" role="alert" hidden></p>
+      <p id="ranking-save-status" class="hint" aria-live="polite">未保存の結果はありません</p>
+      <div class="settings-save"><div class="dialog-actions"><button id="cancel-add" type="button" class="cancel">キャンセル</button><button id="save-results" type="submit" class="primary">この結果を保存</button></div></div>
     </form>
-    <section class="settings-tools"><div class="settings-list-heading"><h2>保存済みのランキング</h2><button id="reload-rankings" class="settings-small-button" type="button">最新の結果を表示</button></div><p class="hint">選択中の区分を表示しています。アプリから登録した結果も含みます。同額は同順位です。</p><p id="ranking-load-message" role="status"></p><ol id="saved-rankings" class="room-scores"></ol></section>
+    </dialog>
+    <section class="settings-tools">
+      <div class="settings-list-heading"><h2>保存済みのランキング <span id="saved-ranking-count" class="ranking-count"></span></h2><button id="reload-rankings" class="settings-small-button" type="button">最新の結果を表示</button></div>
+      <p class="hint">選択中の区分を表示しています。アプリから登録した結果も含みます。同額は同順位です。</p>
+      <p id="ranking-load-message" role="status"></p>
+      <p id="saved-ranking-empty" class="ranking-empty" hidden>まだ記録がありません。「＋ 結果を追加」から登録できます。</p>
+      <ol id="saved-rankings" class="room-scores" aria-label="保存済みのランキング"></ol>
+    </section>
+    <dialog id="ranking-editor" aria-labelledby="ranking-editor-heading">
+      <form id="ranking-editor-form" class="settings-editor">
+        <h2 id="ranking-editor-heading">ランキングの記録を編集</h2>
+        <label>参加者の表示名<input id="edit-result-name" required maxlength="24" autocomplete="off"></label>
+        <label>最終所持金（円）<input id="edit-result-money" type="number" required step="1"></label>
+        <p class="hint">所持金は円単位の整数で入力してください。保存すると全員のランキングに反映されます。</p>
+        <p id="ranking-editor-error" class="notice" role="alert" hidden></p>
+        <div class="dialog-actions"><button id="cancel-edit" type="button" class="cancel">キャンセル</button><button id="save-edited-result" type="submit" class="primary">この記録を保存</button></div>
+      </form>
+    </dialog>
   </main>
 </body>
 </html>

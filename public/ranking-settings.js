@@ -1,7 +1,7 @@
 "use strict";
 (() => {
   const $ = id => document.getElementById(id);
-  let audience = 'child', entries = [], saving = false, pendingId = null;
+  let audience = 'child', entries = [], saving = false, pendingId = null, editingId = null;
   const buttons = document.querySelectorAll('[data-audience]');
   const fields = ['result-name', 'result-money', 'result-source'];
   const pending = () => Boolean($('result-name').value || $('result-money').value);
@@ -12,13 +12,33 @@
     fields.forEach(id => { $(id).disabled = saving; });
     buttons.forEach(button => { button.disabled = saving; });
     $('reload-rankings').disabled = saving;
+    $('add-result').disabled = saving;
+    $('cancel-add').disabled = saving;
+    $('cancel-edit').disabled = saving;
+    for (const id of ['edit-result-name', 'edit-result-money', 'save-edited-result']) $(id).disabled = saving;
   }
   function render() {
     buttons.forEach(button => button.setAttribute('aria-pressed', String(button.dataset.audience === audience)));
     const sorted = entries.filter(item => item.audience === audience).sort((a, b) => b.money - a.money);
+    $('saved-ranking-count').textContent = `${sorted.length}人`;
+    $('saved-ranking-empty').hidden = sorted.length > 0 || saving || Boolean($('ranking-load-message').textContent);
     $('saved-rankings').replaceChildren(...sorted.map(item => {
       const li = document.createElement('li');
-      li.textContent = `${sorted.findIndex(other => other.money === item.money) + 1}位 · ${item.name}：${item.money.toLocaleString('ja-JP')}円（${item.source}）`;
+      const rank = sorted.findIndex(other => other.money === item.money) + 1;
+      li.className = `ranking-card settings-ranking-card${rank <= 3 ? ` ranking-place-${rank}` : ''}`;
+      const position = document.createElement('span');
+      position.className = 'ranking-position'; position.textContent = `${rank}位`;
+      const identity = document.createElement('div');
+      identity.className = 'ranking-identity';
+      const name = document.createElement('strong');
+      name.className = 'ranking-name'; name.textContent = item.name;
+      const source = document.createElement('span');
+      source.className = 'ranking-source'; source.textContent = item.source;
+      identity.append(name, source);
+      const money = document.createElement('strong');
+      money.className = 'ranking-money'; money.textContent = `${item.money.toLocaleString('ja-JP')}円`;
+      const actions = document.createElement('div');
+      actions.className = 'settings-ranking-actions';
       const remove = document.createElement('button');
       remove.type = 'button';
       remove.className = 'settings-small-button';
@@ -34,7 +54,21 @@
         } catch (error) { message(error.message); }
         finally { saving = false; render(); }
       });
-      li.append(remove);
+      const edit = document.createElement('button');
+      edit.type = 'button'; edit.className = 'settings-small-button'; edit.textContent = '編集';
+      edit.setAttribute('aria-label', `${item.name}さんの名前と所持金を編集`);
+      edit.disabled = saving || editingId !== null;
+      edit.addEventListener('click', () => {
+        if (saving || editingId !== null) return;
+        editingId = item.id;
+        $('edit-result-name').value = item.name; $('edit-result-money').value = String(item.money);
+        $('ranking-editor-error').hidden = true;
+        $('ranking-editor').showModal();
+        render(); $('edit-result-name').focus();
+      });
+      remove.disabled = saving || editingId !== null;
+      actions.append(remove, edit);
+      li.append(position, identity, money, actions);
       return li;
     }));
     status();
@@ -57,6 +91,18 @@
   }
   buttons.forEach(button => button.addEventListener('click', () => { audience = button.dataset.audience; render(); }));
   fields.forEach(id => $(id).addEventListener('input', status));
+  $('add-result').addEventListener('click', () => {
+    if (saving) return;
+    $('result-heading').textContent = `${audience === 'child' ? '子供' : '大人'}の結果を追加`;
+    $('ranking-add-error').hidden = true;
+    $('ranking-add').showModal(); $('result-name').focus();
+  });
+  $('cancel-add').addEventListener('click', () => { if (!saving) $('ranking-add').close(); });
+  $('ranking-add').addEventListener('cancel', event => { if (saving) event.preventDefault(); });
+  $('ranking-add').addEventListener('close', () => {
+    pendingId = null; $('result-name').value = ''; $('result-money').value = '';
+    status(); $('add-result').focus();
+  });
   $('ranking-settings-form').addEventListener('submit', async event => {
     event.preventDefault();
     if (saving || !pending()) return;
@@ -70,11 +116,35 @@
       entries = await request({ entries: results });
       pendingId = null;
       $('result-name').value = ''; $('result-money').value = '';
-      message('1人分の結果を保存しました。次の参加者を入力できます。');
-    } catch (error) { message(error.message); }
-    finally { saving = false; render(); $('result-name').focus(); }
+      $('ranking-add').close();
+      message('1人分の結果を保存しました。全員のランキングに反映されます。');
+    } catch (error) { $('ranking-add-error').textContent = error.message; $('ranking-add-error').hidden = false; }
+    finally { saving = false; render(); ($('ranking-add').open ? $('result-name') : $('add-result')).focus(); }
   });
   $('reload-rankings').addEventListener('click', load);
-  window.addEventListener('beforeunload', event => { if (pending()) { event.preventDefault(); event.returnValue = ''; } });
+  $('cancel-edit').addEventListener('click', () => {
+    if (saving) return;
+    $('ranking-editor').close();
+  });
+  $('ranking-editor').addEventListener('cancel', event => { if (saving) event.preventDefault(); });
+  $('ranking-editor').addEventListener('close', () => {
+    editingId = null; render(); $('reload-rankings').focus();
+  });
+  $('ranking-editor-form').addEventListener('submit', async event => {
+    event.preventDefault();
+    if (saving || editingId === null) return;
+    try {
+      const name = $('edit-result-name').value.trim(), rawMoney = $('edit-result-money').value.trim();
+      const money = Number(rawMoney);
+      if (!name || name.length > 24 || !rawMoney || !Number.isSafeInteger(money)) throw new Error('表示名と所持金を確認してください。所持金は整数で入力してください。');
+      saving = true; status();
+      entries = await request({ id: editingId, name, money }, './api/admin/rankings/update');
+      $('ranking-editor').close();
+      message('名前と所持金を保存しました。全員のランキングに反映されます。');
+    } catch (error) {
+      $('ranking-editor-error').textContent = error.message; $('ranking-editor-error').hidden = false;
+    } finally { saving = false; render(); }
+  });
+  window.addEventListener('beforeunload', event => { if (pending() || $('ranking-editor').open) { event.preventDefault(); event.returnValue = ''; } });
   render(); load();
 })();

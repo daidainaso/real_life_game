@@ -38,6 +38,14 @@ export default {
         if (!['GET', 'PUT'].includes(request.method)) fail('対応していない操作です。', 405);
         return env.ROOMS.get(env.ROOMS.idFromName('shared-card-settings')).fetch(request);
       }
+      if (url.pathname === '/api/admin/rankings/update') {
+        if (request.method !== 'POST') fail('対応していない操作です。', 405);
+        const input = await body(request);
+        if (typeof input.id !== 'string' || !/^[a-zA-Z0-9-]{1,120}$/.test(input.id) || !Number.isSafeInteger(input.money)) fail('記録と所持金を確認してください。', 400);
+        return env.ROOMS.get(env.ROOMS.idFromName('event-rankings')).fetch(new Request('https://internal/rankings/update', {
+          method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id: input.id, name: validName(input.name), money: input.money }),
+        }));
+      }
       if (url.pathname === '/api/admin/rankings/delete') {
         if (request.method !== 'POST') fail('対応していない操作です。', 405);
         const input = await body(request);
@@ -206,6 +214,17 @@ export class GameRoom {
             return json(data, 201);
           }
           fail('グループを作成できませんでした。もう一度お試しください。', 503);
+        }
+        if (url.pathname === '/rankings/update' && request.method === 'POST') {
+          const input = await body(request);
+          const entries = await this.ctx.storage.get('rankings') || [];
+          const entry = entries.find(item => item.id === input.id);
+          if (!entry) fail('記録が見つかりません。一覧を更新してください。', 404);
+          if (!Number.isSafeInteger(input.money)) fail('所持金は整数で入力してください。');
+          entry.name = validName(input.name);
+          entry.money = input.money;
+          await this.ctx.storage.put('rankings', entries);
+          return json({ entries: entries.sort((a, b) => b.money - a.money) });
         }
         if (url.pathname === '/rankings/delete' && request.method === 'POST') {
           const { id } = await body(request);

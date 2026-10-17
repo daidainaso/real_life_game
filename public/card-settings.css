@@ -29,6 +29,18 @@
 .settings-tools { margin-top: 32px; }
 .settings-tool-buttons { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; }
 .settings-tools .text-button { width: auto; }
+#saved-rankings { display: grid; gap: 12px; margin-top: 20px; }
+#saved-rankings .settings-ranking-card { grid-template-columns: 46px minmax(0, 1fr) auto auto; padding: 18px; gap: 16px; }
+#saved-rankings .ranking-money { font-size: 20px; }
+.settings-ranking-actions { display: flex; gap: 8px; }
+.settings-ranking-actions button:last-child { order: -1; background: #eaf0e5; }
+@media (max-width: 680px) {
+  #saved-rankings .settings-ranking-card { grid-template-columns: 38px minmax(0, 1fr); gap: 10px 12px; padding: 14px; }
+  #saved-rankings .ranking-position { grid-column: 1; grid-row: 1 / span 2; }
+  #saved-rankings .ranking-identity { grid-column: 2; }
+  #saved-rankings .ranking-money { grid-column: 2; white-space: normal; overflow-wrap: anywhere; }
+  .settings-ranking-actions { grid-column: 1 / -1; justify-content: flex-end; border-top: 1px solid #e3e4da; padding-top: 10px; }
+}
 .settings-app input:focus-visible { outline: 3px solid #cd8433; outline-offset: 2px; }
 .ranking-settings-table { min-width: 660px; }
 .ranking-settings-table th:nth-child(1) { width: auto; }
