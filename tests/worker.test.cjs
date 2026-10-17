@@ -99,6 +99,14 @@ test('Workers実行環境：共有山札、WebSocket同期、権限、重複操�
       assert.equal((await api('', { name: '不正な設定', audience, cards: invalid })).status, 400);
     }
     assert.equal((await api('', { name: '不正なボーナス', audience, bonusCards: [{ ...cards[0], move: 1 }] })).status, 400);
+    const sharedResponse = await mf.dispatchFetch('http://localhost/api/card-settings');
+    const shared = (await sharedResponse.json()).settings;
+    shared[audience] = cards;
+    shared.bonus[audience] = [{ ...cards[0], id: 'custom-bonus', move: 0, money: 7654 }];
+    const savedResponse = await mf.dispatchFetch('http://localhost/api/card-settings', { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(shared) });
+    assert.equal(savedResponse.status, 200);
+    await mf.unsafeEvictDurableObject('game', 'GameRoom', { name: 'shared-card-settings' });
+    assert.deepEqual((await (await mf.dispatchFetch('http://localhost/api/card-settings')).json()).settings, shared);
     const custom = await api('', { name: '設定ホスト', audience, cards, bonusCards: [{ ...cards[0], id: 'custom-bonus', move: 0, money: 7654 }] });
     assert.equal(custom.status, 201);
     const customRoute = '/' + custom.room.code;

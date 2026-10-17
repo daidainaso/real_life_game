@@ -167,11 +167,11 @@ function initializeGame() {
     $("result-money").textContent = LifeGame.amount(state.money);
     $("result-count").textContent = `${state.drawCount}枚のカードで、人生を歩みました。`;
   }
-  function start() {
+  async function start() {
     ({ config: gameConfig, cards } = audienceGame($("audience").value || "child"));
     if (typeof CardSettings !== "undefined") {
-      try { ({ config: gameConfig, cards } = CardSettings.game($("audience").value || "child", localStorage)); }
-      catch { notice("カード設定を読み込めないため、初期設定で開始します。カード設定画面で保存をやり直してください。"); }
+      try { ({ config: gameConfig, cards } = await CardSettings.sharedGame($("audience").value || "child")); }
+      catch { notice("共通カード設定を読み込めませんでした。もう一度開始してください。"); return; }
     }
     state = LifeGame.create(gameConfig, cards);
     save();
@@ -189,7 +189,7 @@ function initializeGame() {
   }
   function requestStart() {
     if (hasRecord) confirmAction("新しく始めますか？", "現在の記録を消し、初期所持金から新しいゲームを始めます。", "新しく始める", start);
-    else start();
+    else return start();
   }
   $("confirm-dialog").addEventListener("close", () => {
     const action = pendingAction;

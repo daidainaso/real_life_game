@@ -31,7 +31,7 @@
 
 ## ローカル実行
 
-カード設定画面は `/card-settings.html` に直接アクセスして開きます。ゲーム画面にはリンクを表示しません。子供用・大人用それぞれの通常カードとボーナスカードを追加・編集・削除できます。ボーナスカードの移動数は0で固定です。保存は現在のブラウザ内で、新しく始めるひとり用ゲームと、新しく作るグループのグループに反映されます。グループではホストが選んだ対象の保存済みカードをグループ作成時にサーバーで検証・保存し、参加者全員で共有します。参加者側の設定は使用しません。進行中のゲームや作成済みのグループは開始・作成時の設定を保持し、再接続後も同じカードを使用します。設定の反映にファイルの置き換えや再デプロイは不要です。JSONの読み込み・書き出しにも対応しています。「設定ファイルを出力」はアプリ全体の初期設定を変更するときに使用します。ボーナスカードもグループ作成時のホストの設定を保存し、ゴール後の抽選に使用します。以前保存した設定やJSONにボーナス設定がない場合は、従来のボーナスカードを補います。
+Card settings are managed at `/card-settings.html` and saved on the server for all browsers. New solo games and groups load these shared settings. Existing games retain their original cards. Normal and bonus cards for both audiences can be edited; JSON import/export is available for backups and migration from previous browser settings. No redeployment is needed after saving settings.
 
 Node.js 22以降とnpmを使用します。このフォルダで実行してください。
 
@@ -110,3 +110,8 @@ Wranglerで目的のCloudflareアカウントを選択してください。複�
 暗証番号の入力や設定は不要です。ランキングは永続保存され、表示名と所持金が全員に公開されます。
 
 ランキング設定の「保存済みのランキング」では、各記録の「削除」から確認後に1件ずつ削除できます。紙・ひとり・グループの記録が対象です。削除後は同じ記録を再送しても復活せず、他の参加者の記録は保持します。公開ランキングには次の更新時に反映されます。管理画面・削除APIは既存の管理機能と同様に認証なしです。
+
+
+## Shared card settings
+
+Card settings are stored in the shared Durable Object through `/api/card-settings` (GET/PUT). All browsers use the same settings for new solo games and groups. Active games retain their original cards. Previous browser settings can be transferred using JSON export/import and saved to the shared settings.

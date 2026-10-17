@@ -36,6 +36,7 @@ test('グループ画面：モード選択、参加、手番表示、連打防�
     localStorage: { getItem: key => key === 'lifeGame.cardSettings.v1' ? JSON.stringify({ child: [{ id: 'custom-child', title: '設定済みカード', money: 1234, move: 5, icon: '✦' }], adult: [{ id: 'custom-adult', title: '大人の設定', money: 5678, move: 2, icon: '✦' }] }) : null, setItem() {} },
     setTimeout: (fn, delay) => { const id = timers.size + 1; fn.delay = delay; timers.set(id, fn); return id; }, clearTimeout: id => timers.delete(id),
     fetch: async (url, options) => {
+      if (url === '/api/card-settings') return { ok: true, json: async () => ({ settings: vm.runInContext('CardSettings.defaults()', context) }) };
       if (url.endsWith('/leave') && leaveFails) return { ok: false, json: async () => ({ error: '退出できませんでした。' }) };
       if (url === './api/groups') return { ok: true, json: async () => ({ groups: Array.from({ length: 8 }, (_, index) => ({ group: index + 1, status: index === 1 ? 'waiting' : index === 2 ? 'playing' : 'empty', count: index === 1 ? 2 : index === 2 ? 3 : 0 })) }) };
       requests.push({ url, input: options.body ? JSON.parse(options.body) : null }); return { ok: true, json: async () => ({ token: 'secret', room: state }) };
@@ -69,10 +70,8 @@ test('グループ画面：モード選択、参加、手番表示、連打防�
   assert.equal($('room-group-1').attributes['aria-pressed'], 'false');
   await $('enter-room').click();
   assert.equal(requests[0].url, './api/groups/8/create');
-  assert.equal(requests[0].input.cards[0].id, 'custom-child');
-  assert.equal(requests[0].input.cards[0].money, 1234);
-  assert.equal(requests[0].input.bonusCards.length, 4);
-  assert.equal(requests[0].input.bonusCards[0].move, 0);
+  assert.equal(Object.hasOwn(requests[0].input, 'cards'), false);
+  assert.equal(Object.hasOwn(requests[0].input, 'bonusCards'), false);
   const ws = sockets[0]; assert.match(ws.url.href, /^wss:/);
   assert.equal($('room-start').disabled, true);
   ws.open(); ws.update(state); assert.equal($('room-start').disabled, false);

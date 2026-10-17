@@ -190,10 +190,6 @@
     pending = true; renderGroups();
     try {
       const input = { name: $('player-name').value, audience: $('room-audience').value };
-      if (create && typeof CardSettings !== 'undefined') {
-        try { const settings = CardSettings.load(localStorage); input.cards = settings[input.audience]; input.bonusCards = settings.bonus[input.audience]; }
-        catch { throw new Error('カード設定を読み込めません。設定画面で保存をやり直してからグループを作成してください。'); }
-      }
       const data = await api(`/groups/${selectedGroup}/${create ? 'create' : 'join'}`, input);
       session = { code: data.room.code, token: data.token }; room = data.room;
       let saved = true;

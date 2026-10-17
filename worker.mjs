@@ -34,6 +34,10 @@ export default {
       const url = new URL(request.url);
       if (!url.pathname.startsWith('/api/')) return env.ASSETS.fetch(request);
       if (request.headers.get('Origin') && request.headers.get('Origin') !== url.origin) fail('この接続元からは操作できません。', 403);
+      if (url.pathname === '/api/card-settings') {
+        if (!['GET', 'PUT'].includes(request.method)) fail('対応していない操作です。', 405);
+        return env.ROOMS.get(env.ROOMS.idFromName('shared-card-settings')).fetch(request);
+      }
       if (url.pathname === '/api/admin/rankings/delete') {
         if (request.method !== 'POST') fail('対応していない操作です。', 405);
         const input = await body(request);
@@ -151,6 +155,15 @@ export class GameRoom {
     return this.ctx.blockConcurrencyWhile(async () => {
       try {
         const url = new URL(request.url), action = url.pathname.split('/').at(-1);
+        if (url.pathname === '/api/card-settings') {
+          let settings = await this.ctx.storage.get('cardSettings');
+          if (request.method === 'PUT') {
+            settings = cardSettings.validate(await body(request, 1048576));
+            await this.ctx.storage.put('cardSettings', settings);
+          }
+          settings ??= { ...Object.fromEntries(['child', 'adult'].map(id => [id, cardData.audienceGame(id).cards.map(({ era, ...card }) => card)])), bonus: cardData.bonusCards };
+          return json({ settings });
+        }
         const groupFinish = url.pathname.match(/^\/api\/groups\/([1-8])\/finish$/);
         if (groupFinish && request.method === 'POST') {
           const input = await body(request);
@@ -218,7 +231,15 @@ export class GameRoom {
         }
         if (action === 'create' && request.method === 'POST') {
           if (this.room) fail('この番号は使用中です。', 409);
-          const input = await body(request, 131072), settings = roomSettings(input);
+          const input = await body(request, 131072);
+          if (this.env?.ROOMS) {
+            const response = await this.env.ROOMS.get(this.env.ROOMS.idFromName('shared-card-settings')).fetch(new Request('https://internal/api/card-settings'));
+            if (!response.ok) fail('共通カード設定を読み込めません。もう一度お試しください。', 503);
+            const { settings: shared } = await response.json();
+            input.cards = shared[input.audience];
+            input.bonusCards = shared.bonus[input.audience];
+          }
+          const settings = roomSettings(input);
           const player = { id: crypto.randomUUID(), token: crypto.randomUUID(), name: validName(input.name), money: settings.config.initialMoney, position: 0 };
           this.room = { code: url.pathname.split('/')[3], controlToken: player.token, group: input.group, audience: input.audience, cards: settings.cards,
             initialMoney: settings.config.initialMoney, goal: settings.config.goal, players: [player], turn: 0, started: false, finished: false,

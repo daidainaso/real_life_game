@@ -29,7 +29,7 @@
       <p id="settings-message" class="notice" role="status" hidden></p>
       <div class="settings-save"><span id="save-status" aria-live="polite">保存済みの設定</span><button type="submit" class="primary">設定を保存</button></div>
     </form>
-    <section class="settings-tools"><h2>設定の管理</h2><p class="hint">設定はこのブラウザに保存されます。別の端末で使う場合は「JSONを書き出す」でファイルを保存し、移行先で「JSONを読み込む」を選んでから「設定を保存」を押してください。子供用・大人用の両方の設定をまとめて移せます。</p><p class="hint">「設定ファイルを出力」は、アプリ全体の初期設定を変更するための機能です。保存した設定で遊ぶ場合は、出力する必要はありません。</p><div class="settings-tool-buttons"><button id="export-json" type="button" class="settings-small-button">JSONを書き出す</button><label class="settings-small-button">JSONを読み込む<input id="import-json" type="file" accept=".json,application/json" class="sr-only"></label><button id="export-source" type="button" class="settings-small-button">設定ファイルを出力</button><button id="reset-cards" type="button" class="text-button">選択中のカードを初期設定に戻す</button></div></section>
+    <section class="settings-tools"><h2>設定の管理</h2><p class="hint">設定はサーバーに保存され、全員共通です。新しく始めるゲームに反映されます。</p><p class="hint">「設定ファイルを出力」は、アプリ全体の初期設定を変更するための機能です。保存した設定で遊ぶ場合は、出力する必要はありません。</p><div class="settings-tool-buttons"><button id="export-json" type="button" class="settings-small-button">JSONを書き出す</button><label class="settings-small-button">JSONを読み込む<input id="import-json" type="file" accept=".json,application/json" class="sr-only"></label><button id="export-source" type="button" class="settings-small-button">設定ファイルを出力</button><button id="reset-cards" type="button" class="text-button">選択中のカードを初期設定に戻す</button></div></section>
     <dialog id="card-editor" aria-labelledby="card-editor-heading">
       <form id="card-editor-form" class="settings-editor">
         <h2 id="card-editor-heading">カードを編集</h2>

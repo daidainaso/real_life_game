@@ -40,6 +40,18 @@ const CardSettings = (() => {
     const value = load(storage);
     return { config: base.config, cards: value[id].map(card => ({ ...card, era: id })) };
   }
-  return { key, defaults, validateCards, validate, load, save, game };
+  async function sharedRequest(method = "GET", value) {
+    const response = await fetch("/api/card-settings", { method, cache: "no-store", headers: { "Content-Type": "application/json" }, ...(value ? { body: JSON.stringify(validate(value)) } : {}) });
+    const data = await response.json();
+    if (!response.ok) throw new Error(data.error || "Shared card settings request failed.");
+    return validate(data.settings);
+  }
+  const loadShared = () => sharedRequest();
+  const saveShared = value => sharedRequest("PUT", value);
+  async function sharedGame(id) {
+    const value = await loadShared();
+    return { config: audienceGame(id).config, cards: value[id].map(card => ({ ...card, era: id })) };
+  }
+  return { loadShared, saveShared, sharedGame, key, defaults, validateCards, validate, load, save, game };
 })();
 if (typeof module !== "undefined" && module.exports) module.exports = CardSettings;

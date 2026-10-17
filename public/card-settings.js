@@ -1,5 +1,5 @@
 "use strict";
-(() => {
+(async () => {
   const $ = id => document.getElementById(id);
   let draft;
   let audience = "child";
@@ -7,8 +7,11 @@
   const currentCards = () => kind === "bonus" ? draft.bonus[audience] : draft[audience];
   let dirty = false;
   function message(text) { $("settings-message").textContent = text; $("settings-message").hidden = false; }
-  try { draft = CardSettings.load(localStorage); }
-  catch { draft = CardSettings.defaults(); message("保存した設定を読み込めませんでした。初期設定を表示しています。保存をやり直してください。"); }
+  const controls = [...document.querySelectorAll("button, input")];
+  controls.forEach(control => { control.disabled = true; });
+  try { draft = await CardSettings.loadShared(); }
+  catch { message("共通カード設定を読み込めませんでした。ページを再読み込みしてください。"); return; }
+  controls.forEach(control => { control.disabled = false; });
   function changed() { dirty = true; $("save-status").textContent = "未保存の変更があります"; }
   function render() {
     $("settings-cards").replaceChildren();
@@ -47,7 +50,7 @@
   }
   $("cancel-card").addEventListener("click", () => $("card-editor").close());
   $("card-editor").addEventListener("close", () => { (editorTrigger?.isConnected ? editorTrigger : $("add-card")).focus(); });
-  $("card-editor-form").addEventListener("submit", event => {
+  $("card-editor-form").addEventListener("submit", async event => {
     event.preventDefault();
     const card = { id: editingIndex === null ? `${audience}-${crypto.randomUUID()}` : currentCards()[editingIndex].id };
     for (const key of ["icon", "title", "money", "move"]) card[key] = ["money", "move"].includes(key) ? $("edit-" + key).valueAsNumber : $("edit-" + key).value;
@@ -55,7 +58,7 @@
     const candidate = structuredClone(draft), list = kind === "bonus" ? candidate.bonus[audience] : candidate[audience];
     if (editingIndex === null) list.push(card); else list[editingIndex] = card;
     try {
-      draft = CardSettings.save(localStorage, candidate); dirty = false; render();
+      draft = await CardSettings.saveShared(candidate); dirty = false; render();
       $("save-status").textContent = "保存済みの設定";
       $("card-editor").close(); message("カードを保存しました。次のゲームから反映されます。");
     } catch (error) { $("card-editor-error").textContent = error.message; $("card-editor-error").hidden = false; }
@@ -63,10 +66,10 @@
   for (const id of ["add-card", "add-card-bottom"]) $(id).addEventListener("click", () => {
     if (currentCards().length < 200) openEditor(null, $(id));
   });
-  $("settings-form").addEventListener("submit", event => {
+  $("settings-form").addEventListener("submit", async event => {
     event.preventDefault();
-    try { draft = CardSettings.save(localStorage, draft); dirty = false; render(); $("save-status").textContent = "保存済みの設定"; message("保存しました。次のゲームから反映されます。"); }
-    catch (error) { message(error.name === "QuotaExceededError" || error.name === "SecurityError" ? "ブラウザに保存できません。設定をJSONで書き出して保管してください。" : error.message); }
+    try { draft = await CardSettings.saveShared(draft); dirty = false; render(); $("save-status").textContent = "保存済みの設定"; message("保存しました。次のゲームから反映されます。"); }
+    catch (error) { message(error.message); }
   });
   function download(name, content, type) {
     const url = URL.createObjectURL(new Blob([content], { type })); const link = document.createElement("a"); link.href = url; link.download = name; link.click(); setTimeout(() => URL.revokeObjectURL(url), 1000);
